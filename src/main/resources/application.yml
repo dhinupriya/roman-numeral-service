@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: roman-numeral-service
+
+  # Enable virtual threads for massive concurrency (Java 21)
+  threads:
+    virtual:
+      enabled: true
+
+  # Graceful shutdown — finish in-flight requests before stopping
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  # Disable Whitelabel error page — GlobalExceptionHandler handles all errors
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
+
+server:
+  port: 8080
+  shutdown: graceful
+
+  # Response compression — significant savings for range queries (~150KB → ~20KB)
+  compression:
+    enabled: true
+    min-response-size: 1024
+    mime-types: application/json
+
+  # Input size limits — defense against oversized requests
+  tomcat:
+    max-http-form-content-size: 10KB
+  max-http-request-header-size: 8KB
+
+# Application configuration
+app:
+  max-value: 3999
+
+# Actuator endpoints (Phase 3 will expand these)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    com.adobe.romannumeral: DEBUG
