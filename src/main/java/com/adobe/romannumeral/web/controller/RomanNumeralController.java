@@ -82,8 +82,12 @@ public class RomanNumeralController {
         try {
             return Integer.parseInt(value.trim());
         } catch (NumberFormatException e) {
+            // Sanitize the input value in error messages — never reflect raw user input
+            // to prevent XSS in clients that render error messages as HTML
+            String sanitized = value.length() > 50 ? value.substring(0, 50) + "..." : value;
+            sanitized = sanitized.replaceAll("[<>&\"']", "");
             throw new InvalidInputException(
-                    "'" + value + "' is not a valid integer. "
+                    "'" + sanitized + "' is not a valid integer. "
                             + "Must be a whole number between " + RomanNumeralConstants.MIN_VALUE
                             + " and " + RomanNumeralConstants.MAX_VALUE);
         }

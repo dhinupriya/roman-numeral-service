@@ -104,5 +104,69 @@ class RomanNumeralRangeTest {
                     .isInstanceOf(InvalidRangeException.class)
                     .hasMessageContaining("min must be between");
         }
+
+        @Test
+        @DisplayName("Should reject max = 0")
+        void shouldRejectZeroMax() {
+            assertThatThrownBy(() -> new RomanNumeralRange(0, 0))
+                    .isInstanceOf(InvalidRangeException.class);
+        }
+
+        @Test
+        @DisplayName("Should reject both negative")
+        void shouldRejectBothNegative() {
+            assertThatThrownBy(() -> new RomanNumeralRange(-5, -1))
+                    .isInstanceOf(InvalidRangeException.class)
+                    .hasMessageContaining("min must be between");
+        }
+    }
+
+    @Nested
+    @DisplayName("Boundary edge ranges")
+    class BoundaryEdgeRanges {
+
+        @Test
+        @DisplayName("Should accept range at max end: 3998-3999")
+        void shouldAcceptRangeAtMaxEnd() {
+            var range = new RomanNumeralRange(3998, 3999);
+            assertThat(range.size()).isEqualTo(2);
+        }
+    }
+
+    @Nested
+    @DisplayName("Record contract (equality, hashCode, toString)")
+    class RecordContract {
+
+        @Test
+        @DisplayName("Equal ranges should be equal")
+        void shouldBeEqualForSameValues() {
+            var range1 = new RomanNumeralRange(1, 10);
+            var range2 = new RomanNumeralRange(1, 10);
+            assertThat(range1).isEqualTo(range2);
+        }
+
+        @Test
+        @DisplayName("Equal ranges should have same hashCode")
+        void shouldHaveConsistentHashCode() {
+            var range1 = new RomanNumeralRange(1, 10);
+            var range2 = new RomanNumeralRange(1, 10);
+            assertThat(range1.hashCode()).isEqualTo(range2.hashCode());
+        }
+
+        @Test
+        @DisplayName("Different ranges should not be equal")
+        void shouldNotBeEqualForDifferentValues() {
+            var range1 = new RomanNumeralRange(1, 10);
+            var range2 = new RomanNumeralRange(1, 20);
+            assertThat(range1).isNotEqualTo(range2);
+        }
+
+        @Test
+        @DisplayName("toString should include min and max")
+        void shouldHaveUsefulToString() {
+            var range = new RomanNumeralRange(1, 10);
+            String str = range.toString();
+            assertThat(str).contains("1").contains("10");
+        }
     }
 }

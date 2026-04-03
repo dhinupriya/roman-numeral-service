@@ -52,4 +52,20 @@ class RomanNumeralResultTest {
         var result2 = new RomanNumeralResult("2", "II");
         assertThat(result1).isNotEqualTo(result2);
     }
+
+    @Test
+    @DisplayName("Should reject both null")
+    void shouldRejectBothNull() {
+        assertThatThrownBy(() -> new RomanNumeralResult(null, null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("input must not be null");
+    }
+
+    @Test
+    @DisplayName("Equal results should have same hashCode")
+    void shouldHaveConsistentHashCode() {
+        var result1 = new RomanNumeralResult("1", "I");
+        var result2 = new RomanNumeralResult("1", "I");
+        assertThat(result1.hashCode()).isEqualTo(result2.hashCode());
+    }
 }
