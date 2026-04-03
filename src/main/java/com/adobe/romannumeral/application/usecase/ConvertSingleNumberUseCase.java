@@ -4,8 +4,6 @@ import com.adobe.romannumeral.domain.model.RomanNumeralResult;
 import com.adobe.romannumeral.domain.service.RomanNumeralConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
 /**
  * Use case for converting a single integer to a Roman numeral.
  *
@@ -17,7 +15,6 @@ import org.springframework.stereotype.Service;
  * Range conversions are handled by {@code ConvertRangeUseCase} (Phase 2).
  */
 @Slf4j
-@Service
 @RequiredArgsConstructor
 public class ConvertSingleNumberUseCase {
 

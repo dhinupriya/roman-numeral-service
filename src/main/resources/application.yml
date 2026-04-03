@@ -36,6 +36,7 @@ server:
 # Application configuration
 app:
   max-value: 3999
+  max-range-size: 3999
 
 # Actuator endpoints (Phase 3 will expand these)
 management:

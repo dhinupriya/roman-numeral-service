@@ -1,11 +1,15 @@
 package com.adobe.romannumeral.web;
 
+import com.adobe.romannumeral.application.usecase.ConvertRangeUseCase;
 import com.adobe.romannumeral.application.usecase.ConvertSingleNumberUseCase;
 import com.adobe.romannumeral.domain.exception.InvalidInputException;
+import com.adobe.romannumeral.domain.model.RomanNumeralRange;
 import com.adobe.romannumeral.domain.model.RomanNumeralResult;
+import com.adobe.romannumeral.infrastructure.config.AppProperties;
 import com.adobe.romannumeral.infrastructure.config.SecurityConfig;
 import com.adobe.romannumeral.web.controller.RomanNumeralController;
 import com.adobe.romannumeral.web.error.GlobalExceptionHandler;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,20 +19,19 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.Mockito.verify;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * API slice tests for the Roman numeral controller.
  *
  * <p>Uses {@code @WebMvcTest} — loads only the web layer (controller + exception handler),
- * mocks the use case. Tests HTTP routing, JSON structure, validation, and error responses.
+ * mocks the use cases. Tests HTTP routing, JSON structure, validation, and error responses
+ * for both single and range conversion endpoints.
  */
 @WebMvcTest(controllers = RomanNumeralController.class)
 @Import({GlobalExceptionHandler.class, SecurityConfig.class})
@@ -40,6 +43,21 @@ class RomanNumeralControllerTest {
 
     @MockitoBean
     private ConvertSingleNumberUseCase convertSingleNumberUseCase;
+
+    @MockitoBean
+    private ConvertRangeUseCase convertRangeUseCase;
+
+    @MockitoBean
+    private AppProperties appProperties;
+
+    @BeforeEach
+    void setUp() {
+        when(appProperties.getMaxRangeSize()).thenReturn(3999);
+    }
+
+    // ========================================================================
+    // Single Conversion Tests
+    // ========================================================================
 
     @Nested
     @DisplayName("Single conversion — valid inputs")
@@ -106,7 +124,8 @@ class RomanNumeralControllerTest {
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.error").value("Bad Request"))
                     .andExpect(jsonPath("$.message").value(
-                            "'abc' is not a valid integer. Must be a whole number between 1 and 3999"));
+                            "'abc' is not a valid integer for parameter 'query'. "
+                                    + "Must be a whole number between 1 and 3999"));
         }
 
         @Test
@@ -122,7 +141,7 @@ class RomanNumeralControllerTest {
         void shouldRejectEmptyString() throws Exception {
             mockMvc.perform(get("/romannumeral").param("query", ""))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.message").value("Parameter must not be empty"));
+                    .andExpect(jsonPath("$.message").value("Parameter 'query' must not be empty"));
         }
 
         @Test
@@ -135,7 +154,7 @@ class RomanNumeralControllerTest {
     }
 
     @Nested
-    @DisplayName("Missing or invalid parameters")
+    @DisplayName("Missing or ambiguous parameters")
     class MissingParameters {
 
         @Test
@@ -214,7 +233,7 @@ class RomanNumeralControllerTest {
         void shouldRejectWhitespaceOnly() throws Exception {
             mockMvc.perform(get("/romannumeral").param("query", "   "))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.message").value("Parameter must not be empty"));
+                    .andExpect(jsonPath("$.message").value("Parameter 'query' must not be empty"));
         }
 
         @Test
@@ -240,23 +259,6 @@ class RomanNumeralControllerTest {
     }
 
     @Nested
-    @DisplayName("Response format validation")
-    class ResponseFormatValidation {
-
-        @Test
-        @DisplayName("Success response Content-Type should be application/json")
-        void shouldReturnJsonContentType() throws Exception {
-            when(convertSingleNumberUseCase.execute(1))
-                    .thenReturn(new RomanNumeralResult("1", "I"));
-
-            mockMvc.perform(get("/romannumeral").param("query", "1"))
-                    .andExpect(status().isOk())
-                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
-                            .content().contentTypeCompatibleWith("application/json"));
-        }
-    }
-
-    @Nested
     @DisplayName("Long input sanitization")
     class LongInputSanitization {
 
@@ -276,7 +278,7 @@ class RomanNumeralControllerTest {
     class IntegerBoundaryParsing {
 
         @Test
-        @DisplayName("Integer.MAX_VALUE (2147483647) → parses, then domain rejects")
+        @DisplayName("Integer.MAX_VALUE → parses, then domain rejects")
         void shouldRejectIntMaxValue() throws Exception {
             when(convertSingleNumberUseCase.execute(Integer.MAX_VALUE))
                     .thenThrow(new InvalidInputException(
@@ -287,7 +289,7 @@ class RomanNumeralControllerTest {
         }
 
         @Test
-        @DisplayName("Integer.MIN_VALUE (-2147483648) → parses, then domain rejects")
+        @DisplayName("Integer.MIN_VALUE → parses, then domain rejects")
         void shouldRejectIntMinValue() throws Exception {
             when(convertSingleNumberUseCase.execute(Integer.MIN_VALUE))
                     .thenThrow(new InvalidInputException(
@@ -298,28 +300,156 @@ class RomanNumeralControllerTest {
         }
     }
 
+    // ========================================================================
+    // Range Conversion Tests (Phase 2)
+    // ========================================================================
+
     @Nested
-    @DisplayName("Range query (not yet supported)")
-    class RangeQueryNotSupported {
+    @DisplayName("Range conversion — valid inputs")
+    class ValidRangeConversion {
 
         @Test
-        @DisplayName("GET /romannumeral?min=1&max=10 → 400 (not yet supported)")
-        void shouldRejectRangeQuery() throws Exception {
+        @DisplayName("GET /romannumeral?min=1&max=3 → 200 with 3 conversions")
+        void shouldConvertValidRange() throws Exception {
+            when(convertRangeUseCase.execute(any(RomanNumeralRange.class)))
+                    .thenReturn(List.of(
+                            new RomanNumeralResult("1", "I"),
+                            new RomanNumeralResult("2", "II"),
+                            new RomanNumeralResult("3", "III")));
+
             mockMvc.perform(get("/romannumeral")
                             .param("min", "1")
+                            .param("max", "3"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.conversions").isArray())
+                    .andExpect(jsonPath("$.conversions.length()").value(3))
+                    .andExpect(jsonPath("$.conversions[0].input").value("1"))
+                    .andExpect(jsonPath("$.conversions[0].output").value("I"))
+                    .andExpect(jsonPath("$.conversions[1].input").value("2"))
+                    .andExpect(jsonPath("$.conversions[1].output").value("II"))
+                    .andExpect(jsonPath("$.conversions[2].input").value("3"))
+                    .andExpect(jsonPath("$.conversions[2].output").value("III"));
+        }
+
+        @Test
+        @DisplayName("Range response should have exactly 1 field (conversions)")
+        void shouldReturnExactlyOneField() throws Exception {
+            when(convertRangeUseCase.execute(any(RomanNumeralRange.class)))
+                    .thenReturn(List.of(new RomanNumeralResult("1", "I")));
+
+            mockMvc.perform(get("/romannumeral")
+                            .param("min", "1")
+                            .param("max", "2"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.conversions").exists())
+                    .andExpect(jsonPath("$.length()").value(1));
+        }
+
+        @Test
+        @DisplayName("Range response Content-Type should be application/json")
+        void shouldReturnJsonContentType() throws Exception {
+            when(convertRangeUseCase.execute(any(RomanNumeralRange.class)))
+                    .thenReturn(List.of(new RomanNumeralResult("1", "I")));
+
+            mockMvc.perform(get("/romannumeral")
+                            .param("min", "1")
+                            .param("max", "2"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith("application/json"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Range conversion — invalid inputs")
+    class InvalidRangeConversion {
+
+        @Test
+        @DisplayName("min > max → 400")
+        void shouldRejectReversedRange() throws Exception {
+            mockMvc.perform(get("/romannumeral")
+                            .param("min", "10")
+                            .param("max", "5"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.message").value(
+                            org.hamcrest.Matchers.containsString("min must be less than max")));
+        }
+
+        @Test
+        @DisplayName("min == max → 400")
+        void shouldRejectEqualMinMax() throws Exception {
+            mockMvc.perform(get("/romannumeral")
+                            .param("min", "5")
+                            .param("max", "5"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value(
+                            org.hamcrest.Matchers.containsString("min must be less than max")));
+        }
+
+        @Test
+        @DisplayName("min=0 → 400 (below range)")
+        void shouldRejectMinBelowRange() throws Exception {
+            mockMvc.perform(get("/romannumeral")
+                            .param("min", "0")
+                            .param("max", "10"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("max=4000 → 400 (above range)")
+        void shouldRejectMaxAboveRange() throws Exception {
+            mockMvc.perform(get("/romannumeral")
+                            .param("min", "1")
+                            .param("max", "4000"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("min=abc → 400 (non-integer)")
+        void shouldRejectNonIntegerMin() throws Exception {
+            mockMvc.perform(get("/romannumeral")
+                            .param("min", "abc")
                             .param("max", "10"))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.message").value(
-                            org.hamcrest.Matchers.containsString("not yet supported")));
+                            org.hamcrest.Matchers.containsString("parameter 'min'")));
+        }
+
+        @Test
+        @DisplayName("max=xyz → 400 (non-integer)")
+        void shouldRejectNonIntegerMax() throws Exception {
+            mockMvc.perform(get("/romannumeral")
+                            .param("min", "1")
+                            .param("max", "xyz"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value(
+                            org.hamcrest.Matchers.containsString("parameter 'max'")));
+        }
+
+        @Test
+        @DisplayName("Range exceeds max-range-size → 400")
+        void shouldRejectOversizedRange() throws Exception {
+            when(appProperties.getMaxRangeSize()).thenReturn(100);
+
+            mockMvc.perform(get("/romannumeral")
+                            .param("min", "1")
+                            .param("max", "200"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value(
+                            org.hamcrest.Matchers.containsString("exceeds maximum")));
         }
     }
+
+    // ========================================================================
+    // HTTP Method & Path Tests
+    // ========================================================================
 
     @Nested
     @DisplayName("HTTP method validation")
     class HttpMethodValidation {
 
         @Test
-        @DisplayName("POST /romannumeral → 405 (Method Not Allowed)")
+        @DisplayName("POST /romannumeral → 405")
         void shouldRejectPost() throws Exception {
             mockMvc.perform(post("/romannumeral").param("query", "1"))
                     .andExpect(status().isMethodNotAllowed())
@@ -327,14 +457,14 @@ class RomanNumeralControllerTest {
         }
 
         @Test
-        @DisplayName("PUT /romannumeral → 405 (Method Not Allowed)")
+        @DisplayName("PUT /romannumeral → 405")
         void shouldRejectPut() throws Exception {
             mockMvc.perform(put("/romannumeral").param("query", "1"))
                     .andExpect(status().isMethodNotAllowed());
         }
 
         @Test
-        @DisplayName("DELETE /romannumeral → 405 (Method Not Allowed)")
+        @DisplayName("DELETE /romannumeral → 405")
         void shouldRejectDelete() throws Exception {
             mockMvc.perform(delete("/romannumeral").param("query", "1"))
                     .andExpect(status().isMethodNotAllowed());
@@ -354,13 +484,41 @@ class RomanNumeralControllerTest {
         }
     }
 
+    // ========================================================================
+    // Response Format Tests
+    // ========================================================================
+
     @Nested
-    @DisplayName("Error response format")
-    class ErrorResponseFormat {
+    @DisplayName("Response format validation")
+    class ResponseFormatValidation {
 
         @Test
-        @DisplayName("Error response should have exactly error, message, and status fields")
-        void shouldReturnStructuredErrorResponse() throws Exception {
+        @DisplayName("Success response Content-Type should be application/json")
+        void shouldReturnJsonContentType() throws Exception {
+            when(convertSingleNumberUseCase.execute(1))
+                    .thenReturn(new RomanNumeralResult("1", "I"));
+
+            mockMvc.perform(get("/romannumeral").param("query", "1"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith("application/json"));
+        }
+
+        @Test
+        @DisplayName("Single success response should have exactly 2 fields")
+        void shouldReturnExactlyTwoFieldsForSingle() throws Exception {
+            when(convertSingleNumberUseCase.execute(1))
+                    .thenReturn(new RomanNumeralResult("1", "I"));
+
+            mockMvc.perform(get("/romannumeral").param("query", "1"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.input").value("1"))
+                    .andExpect(jsonPath("$.output").value("I"))
+                    .andExpect(jsonPath("$.length()").value(2));
+        }
+
+        @Test
+        @DisplayName("Error response should have exactly 3 fields")
+        void shouldReturnExactlyThreeFieldsForError() throws Exception {
             mockMvc.perform(get("/romannumeral").param("query", "abc"))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.error").isString())
@@ -374,26 +532,7 @@ class RomanNumeralControllerTest {
         void shouldReturnJsonContentTypeForErrors() throws Exception {
             mockMvc.perform(get("/romannumeral").param("query", "abc"))
                     .andExpect(status().isBadRequest())
-                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
-                            .content().contentTypeCompatibleWith("application/json"));
-        }
-    }
-
-    @Nested
-    @DisplayName("Success response structure")
-    class SuccessResponseStructure {
-
-        @Test
-        @DisplayName("Success response should have exactly 2 fields (input, output)")
-        void shouldReturnExactlyTwoFields() throws Exception {
-            when(convertSingleNumberUseCase.execute(1))
-                    .thenReturn(new RomanNumeralResult("1", "I"));
-
-            mockMvc.perform(get("/romannumeral").param("query", "1"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.input").value("1"))
-                    .andExpect(jsonPath("$.output").value("I"))
-                    .andExpect(jsonPath("$.length()").value(2));
+                    .andExpect(content().contentTypeCompatibleWith("application/json"));
         }
     }
 }

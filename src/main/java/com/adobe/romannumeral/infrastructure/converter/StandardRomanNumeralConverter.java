@@ -4,8 +4,6 @@ import com.adobe.romannumeral.domain.exception.InvalidInputException;
 import com.adobe.romannumeral.domain.model.RomanNumeralResult;
 import com.adobe.romannumeral.domain.service.RomanNumeralConstants;
 import com.adobe.romannumeral.domain.service.RomanNumeralConverter;
-import org.springframework.stereotype.Component;
-
 /**
  * Core Roman numeral conversion algorithm — hand-written, no libraries.
  *
@@ -29,7 +27,6 @@ import org.springframework.stereotype.Component;
  *
  * @see <a href="https://en.wikipedia.org/wiki/Roman_numerals#Standard_form">Wikipedia: Roman Numerals — Standard Form</a>
  */
-@Component
 public class StandardRomanNumeralConverter implements RomanNumeralConverter {
 
     /**
