@@ -7,8 +7,16 @@ import com.adobe.romannumeral.domain.exception.InvalidRangeException;
 import com.adobe.romannumeral.domain.model.RomanNumeralRange;
 import com.adobe.romannumeral.domain.service.RomanNumeralConstants;
 import com.adobe.romannumeral.infrastructure.config.AppProperties;
+import com.adobe.romannumeral.web.dto.ErrorResponse;
 import com.adobe.romannumeral.web.dto.RangeConversionResponse;
 import com.adobe.romannumeral.web.dto.SingleConversionResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Roman Numeral Conversion", description = "Convert integers to Roman numerals — single values or parallel ranges")
 public class RomanNumeralController {
 
     private final ConvertSingleNumberUseCase convertSingleNumberUseCase;
@@ -49,9 +58,48 @@ public class RomanNumeralController {
      * @return JSON with the conversion result(s)
      */
     @GetMapping("/romannumeral")
+    @Operation(
+            summary = "Convert integer(s) to Roman numerals",
+            description = "Single conversion: provide 'query' parameter. "
+                    + "Range conversion: provide both 'min' and 'max' parameters. "
+                    + "If 'query' is present, it takes precedence over min/max."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Successful conversion",
+                    content = @Content(schema = @Schema(oneOf = {
+                            SingleConversionResponse.class,
+                            RangeConversionResponse.class
+                    }))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid input — non-integer, out of range (1-3999), or invalid range",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Missing or invalid API key",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "429",
+                    description = "Rate limit exceeded",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
     public ResponseEntity<?> convert(
+            @Parameter(description = "Integer to convert (single query mode, 1-3999)",
+                    example = "1994")
             @RequestParam(required = false) String query,
+
+            @Parameter(description = "Range minimum (range query mode, 1-3999)",
+                    example = "1")
             @RequestParam(required = false) String min,
+
+            @Parameter(description = "Range maximum (range query mode, 1-3999)",
+                    example = "3999")
             @RequestParam(required = false) String max) {
 
         // Precedence: query param takes priority over min/max
