@@ -1,0 +1,9 @@
+# Docker profile configuration — activated via --spring.profiles.active=docker
+#
+# Overrides default settings for containerized deployment:
+# - Structured JSON logging (Promtail → Loki → Grafana)
+# - Prometheus metrics export enabled
+
+logging:
+  level:
+    com.adobe.romannumeral: INFO

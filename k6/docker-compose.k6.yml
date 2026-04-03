@@ -1,0 +1,59 @@
+# k6 Load Testing via Docker
+#
+# Usage:
+#   # Run load test (app must be running on localhost:8080)
+#   docker compose -f k6/docker-compose.k6.yml run k6-load
+#
+#   # Run stress test
+#   docker compose -f k6/docker-compose.k6.yml run k6-stress
+#
+#   # Run spike test
+#   docker compose -f k6/docker-compose.k6.yml run k6-spike
+#
+#   # Run soak test
+#   docker compose -f k6/docker-compose.k6.yml run k6-soak
+
+services:
+  k6-load:
+    image: grafana/k6:0.50.0
+    volumes:
+      - ./:/scripts:ro
+    environment:
+      - BASE_URL=http://host.docker.internal:8080
+      - API_KEY=test-api-key-1
+    command: run /scripts/load-test.js
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  k6-stress:
+    image: grafana/k6:0.50.0
+    volumes:
+      - ./:/scripts:ro
+    environment:
+      - BASE_URL=http://host.docker.internal:8080
+      - API_KEY=test-api-key-1
+    command: run /scripts/stress-test.js
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  k6-spike:
+    image: grafana/k6:0.50.0
+    volumes:
+      - ./:/scripts:ro
+    environment:
+      - BASE_URL=http://host.docker.internal:8080
+      - API_KEY=test-api-key-1
+    command: run /scripts/spike-test.js
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  k6-soak:
+    image: grafana/k6:0.50.0
+    volumes:
+      - ./:/scripts:ro
+    environment:
+      - BASE_URL=http://host.docker.internal:8080
+      - API_KEY=test-api-key-1
+    command: run /scripts/soak-test.js
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
