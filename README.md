@@ -82,6 +82,8 @@ docker compose down
 
 Available at [localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) (no API key required).
 
+![Swagger UI](docs/screenshots/swagger-ui.png)
+
 OpenAPI 3.1 JSON spec at [localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs).
 
 ### Endpoints
@@ -283,8 +285,19 @@ src/main/java/com/adobe/romannumeral/
 Grafana (localhost:3000)
 ├── App Dashboard       ← conversion rates, latency (p50/p95/p99), errors, JVM
 ├── Infra Dashboard     ← CPU, memory, network per container
-└── Logs (Explore)      ← structured JSON logs searchable by correlation ID
+└── Logs Dashboard      ← structured logs searchable by service, level, status
 ```
+
+#### Application Dashboard
+![App Dashboard - Overview](docs/screenshots/app-dashboard-1.png)
+![App Dashboard - Latency & JVM](docs/screenshots/app-dashboard-2.png)
+
+#### Infrastructure Dashboard
+![Infra Dashboard](docs/screenshots/infra-dashboard.png)
+
+#### Logs Dashboard
+![Logs Dashboard - Volume & Errors](docs/screenshots/logs-dashboard-1.png)
+![Logs Dashboard - 401 & 429](docs/screenshots/logs-dashboard-2.png)
 
 ### Metrics
 
@@ -308,6 +321,8 @@ Plus Spring Actuator auto-configured: `http_server_requests_seconds`, JVM metric
 ### Health
 
 `/actuator/health` includes a custom indicator: `convert(1) == "I"`. Proves the business logic works, not just "JVM alive."
+
+![Health Endpoint](docs/screenshots/health-endpoint.png)
 
 ---
 
@@ -370,10 +385,14 @@ Request → CorrelationId → Logging → API Key Auth → Rate Limit → Securi
 # Locally (requires k6 installed)
 k6 run k6/load-test.js
 
-# Via Docker
+# Via Docker (app must be running via docker compose up)
 docker compose -f k6/docker-compose.k6.yml run k6-load
 docker compose -f k6/docker-compose.k6.yml run k6-stress
+docker compose -f k6/docker-compose.k6.yml run k6-spike
+docker compose -f k6/docker-compose.k6.yml run k6-soak
 ```
+
+> **Tip:** While k6 runs, open the Grafana App Dashboard at [localhost:3000](http://localhost:3000) — request rates, latency percentiles, error rates, and rate limit rejections all update in real-time.
 
 ---
 

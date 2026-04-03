@@ -52,6 +52,7 @@ public class ConversionMetrics {
 
         this.singleTimer = Timer.builder("roman_conversion_single_duration_seconds")
                 .description("Duration of single conversions")
+                .publishPercentileHistogram(true)
                 .register(registry);
 
         this.rangeCounter = Counter.builder("roman_conversion_range_total")
@@ -60,6 +61,7 @@ public class ConversionMetrics {
 
         this.rangeTimer = Timer.builder("roman_conversion_range_duration_seconds")
                 .description("Duration of range conversions")
+                .publishPercentileHistogram(true)
                 .register(registry);
 
         this.rangeSizeSummary = DistributionSummary.builder("roman_conversion_range_size")

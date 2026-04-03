@@ -37,18 +37,19 @@
       }
     },
     {
-      "title": "Container Network I/O",
+      "title": "Network I/O (All Containers)",
+      "description": "Aggregate network throughput. Per-container breakdown available on Linux; Docker Desktop aggregates network metrics.",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
       "targets": [
         {
-          "expr": "rate(container_network_receive_bytes_total{name=~\".+\"}[1m])",
-          "legendFormat": "{{ name }} RX",
+          "expr": "sum(rate(container_network_receive_bytes_total{interface!=\"\"}[1m]))",
+          "legendFormat": "Receive (RX)",
           "refId": "A"
         },
         {
-          "expr": "rate(container_network_transmit_bytes_total{name=~\".+\"}[1m])",
-          "legendFormat": "{{ name }} TX",
+          "expr": "sum(rate(container_network_transmit_bytes_total{interface!=\"\"}[1m]))",
+          "legendFormat": "Transmit (TX)",
           "refId": "B"
         }
       ],
@@ -92,7 +93,7 @@
       "gridPos": { "h": 8, "w": 6, "x": 6, "y": 16 },
       "targets": [
         {
-          "expr": "1 - (node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"})",
+          "expr": "1 - (node_filesystem_avail_bytes{device=~\"/dev/.+\"} / node_filesystem_size_bytes{device=~\"/dev/.+\"})",
           "legendFormat": "Used",
           "refId": "A"
         }
@@ -102,16 +103,33 @@
       }
     },
     {
-      "title": "Container Restart Count",
-      "type": "stat",
+      "title": "Container Count & Uptime",
+      "description": "Number of running containers and how long each has been running.",
+      "type": "table",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
       "targets": [
         {
-          "expr": "container_start_time_seconds{name=~\".+\"}",
+          "expr": "time() - container_start_time_seconds{name=~\"roman-numeral.*\"}",
           "legendFormat": "{{ name }}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true,
+          "format": "table"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s" },
+        "overrides": [
+          { "matcher": {"id": "byName", "options": "Time"}, "properties": [{"id": "custom.hidden", "value": true}] },
+          { "matcher": {"id": "byName", "options": "__name__"}, "properties": [{"id": "custom.hidden", "value": true}] },
+          { "matcher": {"id": "byName", "options": "instance"}, "properties": [{"id": "custom.hidden", "value": true}] },
+          { "matcher": {"id": "byName", "options": "job"}, "properties": [{"id": "custom.hidden", "value": true}] },
+          { "matcher": {"id": "byName", "options": "id"}, "properties": [{"id": "custom.hidden", "value": true}] }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "displayName": "Value", "desc": true }]
+      }
     }
   ],
   "schemaVersion": 39,
@@ -120,5 +138,5 @@
   "time": { "from": "now-1h", "to": "now" },
   "title": "Roman Numeral Service — Infrastructure Dashboard",
   "uid": "roman-numeral-infra",
-  "version": 1
+  "version": 2
 }

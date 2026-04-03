@@ -2,6 +2,8 @@ package com.adobe.romannumeral.infrastructure.security;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,8 +47,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private final Bucket singleQueryBucket;
     private final Bucket rangeQueryBucket;
+    private final Counter rateLimitCounter;
 
-    public RateLimitFilter() {
+    public RateLimitFilter(MeterRegistry registry) {
+        this.rateLimitCounter = Counter.builder("roman_rate_limit_rejected_total")
+                .description("Total number of requests rejected by rate limiting (429)")
+                .register(registry);
         // Greedy refill: tokens are added continuously throughout the second,
         // providing smooth traffic shaping. This is production-grade behavior —
         // prevents bursty rejection patterns that interval refill would cause.
@@ -79,6 +85,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (bucket.tryConsume(1)) {
             filterChain.doFilter(request, response);
         } else {
+            rateLimitCounter.increment();
             log.warn("Rate limit exceeded for {} {}", request.getMethod(), request.getRequestURI());
             response.setHeader("Retry-After", "1");
             FilterResponseHelper.writeErrorResponse(response, HttpStatus.TOO_MANY_REQUESTS,

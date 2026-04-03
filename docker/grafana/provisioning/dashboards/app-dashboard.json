@@ -69,7 +69,7 @@
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
       "targets": [
         {
-          "expr": "sum(increase(http_server_requests_seconds_count{status=\"429\"}[5m]))",
+          "expr": "roman_rate_limit_rejected_total",
           "legendFormat": "429s",
           "refId": "A"
         }

@@ -13,7 +13,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({job=\"docker\"} [1m])) by (compose_service)",
+          "expr": "sum(count_over_time({compose_service=~\".+\"} [1m])) by (compose_service)",
           "legendFormat": "{{ compose_service }}",
           "refId": "A"
         }
@@ -29,7 +29,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{job=\"docker\"} |~ \"(?i)(error|warn|exception|failed)\"",
+          "expr": "{compose_service=~\".+\"} |~ \"\\\"level\\\":\\\"(ERROR|WARN)\\\"\"",
           "refId": "A"
         }
       ],
@@ -59,13 +59,13 @@
       }
     },
     {
-      "title": "Slow Requests (> 100ms)",
+      "title": "Slow Requests (> 50ms)",
       "type": "logs",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 26 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{compose_service=\"roman-numeral-service\"} |~ \"\\\\d{3,}ms\\\\)\"",
+          "expr": "{compose_service=\"roman-numeral-service\"} |~ \"[0-9]{2,}ms\"",
           "refId": "A"
         }
       ],
@@ -82,7 +82,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{compose_service=\"roman-numeral-service\"} |~ \"401\"",
+          "expr": "{compose_service=\"roman-numeral-service\"} |~ \"→ 401|Missing API key|Invalid API key\"",
           "refId": "A"
         }
       ],
@@ -99,7 +99,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{compose_service=\"roman-numeral-service\"} |~ \"429|Rate limit\"",
+          "expr": "{compose_service=\"roman-numeral-service\"} |~ \"→ 429|Rate limit exceeded\"",
           "refId": "A"
         }
       ],
@@ -116,5 +116,5 @@
   "time": { "from": "now-1h", "to": "now" },
   "title": "Roman Numeral Service — Logs Dashboard",
   "uid": "roman-numeral-logs",
-  "version": 1
+  "version": 2
 }
