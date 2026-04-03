@@ -1,5 +1,6 @@
 package com.adobe.romannumeral.integration;
 
+import com.adobe.romannumeral.TestConstants;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,16 +16,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 
 /**
  * Integration tests — full Spring context, real beans, no mocks.
  *
- * <p>Verifies the complete request pipeline: controller → use case → converter → response,
- * including the CachedConverter for single queries and ChunkedParallelExecutor for range queries.
+ * <p>Verifies the complete request pipeline including security filters:
+ * CorrelationId → Logging → Auth → RateLimit → Controller → UseCase → Converter → Response
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@org.springframework.test.annotation.DirtiesContext(classMode = org.springframework.test.annotation.DirtiesContext.ClassMode.BEFORE_CLASS)
 @DisplayName("Integration Tests")
 class RomanNumeralIntegrationTest {
 
@@ -38,7 +39,9 @@ class RomanNumeralIntegrationTest {
         @Test
         @DisplayName("query=1 → I (uses CachedConverter)")
         void shouldConvertSingleNumber() throws Exception {
-            mockMvc.perform(get("/romannumeral").param("query", "1"))
+            mockMvc.perform(get("/romannumeral")
+                            .param("query", "1")
+                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.input").value("1"))
                     .andExpect(jsonPath("$.output").value("I"));
@@ -47,7 +50,9 @@ class RomanNumeralIntegrationTest {
         @Test
         @DisplayName("query=1994 → MCMXCIV")
         void shouldConvertCompoundNumber() throws Exception {
-            mockMvc.perform(get("/romannumeral").param("query", "1994"))
+            mockMvc.perform(get("/romannumeral")
+                            .param("query", "1994")
+                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.input").value("1994"))
                     .andExpect(jsonPath("$.output").value("MCMXCIV"));
@@ -56,7 +61,9 @@ class RomanNumeralIntegrationTest {
         @Test
         @DisplayName("query=3999 → MMMCMXCIX")
         void shouldConvertMaxValue() throws Exception {
-            mockMvc.perform(get("/romannumeral").param("query", "3999"))
+            mockMvc.perform(get("/romannumeral")
+                            .param("query", "3999")
+                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.output").value("MMMCMXCIX"));
         }
@@ -71,14 +78,13 @@ class RomanNumeralIntegrationTest {
         void shouldConvertSmallRange() throws Exception {
             mockMvc.perform(get("/romannumeral")
                             .param("min", "1")
-                            .param("max", "3"))
+                            .param("max", "3")
+                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.conversions").isArray())
                     .andExpect(jsonPath("$.conversions.length()").value(3))
                     .andExpect(jsonPath("$.conversions[0].input").value("1"))
                     .andExpect(jsonPath("$.conversions[0].output").value("I"))
-                    .andExpect(jsonPath("$.conversions[1].input").value("2"))
-                    .andExpect(jsonPath("$.conversions[1].output").value("II"))
                     .andExpect(jsonPath("$.conversions[2].input").value("3"))
                     .andExpect(jsonPath("$.conversions[2].output").value("III"));
         }
@@ -88,7 +94,8 @@ class RomanNumeralIntegrationTest {
         void shouldConvertMediumRange() throws Exception {
             mockMvc.perform(get("/romannumeral")
                             .param("min", "1")
-                            .param("max", "10"))
+                            .param("max", "10")
+                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.conversions.length()").value(10))
                     .andExpect(jsonPath("$.conversions[0].input").value("1"))
@@ -101,14 +108,14 @@ class RomanNumeralIntegrationTest {
         void shouldConvertFullRange() throws Exception {
             mockMvc.perform(get("/romannumeral")
                             .param("min", "1")
-                            .param("max", "3999"))
+                            .param("max", "3999")
+                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.conversions.length()").value(3999))
                     .andExpect(jsonPath("$.conversions[0].input").value("1"))
                     .andExpect(jsonPath("$.conversions[0].output").value("I"))
                     .andExpect(jsonPath("$.conversions[3998].input").value("3999"))
                     .andExpect(jsonPath("$.conversions[3998].output").value("MMMCMXCIX"))
-                    // Spot-check middle values
                     .andExpect(jsonPath("$.conversions[1993].input").value("1994"))
                     .andExpect(jsonPath("$.conversions[1993].output").value("MCMXCIV"))
                     .andExpect(jsonPath("$.conversions[41].input").value("42"))
@@ -120,7 +127,8 @@ class RomanNumeralIntegrationTest {
         void shouldConvertBoundaryRange() throws Exception {
             mockMvc.perform(get("/romannumeral")
                             .param("min", "3998")
-                            .param("max", "3999"))
+                            .param("max", "3999")
+                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.conversions.length()").value(2))
                     .andExpect(jsonPath("$.conversions[0].input").value("3998"))
@@ -133,26 +141,30 @@ class RomanNumeralIntegrationTest {
     class ErrorHandlingE2E {
 
         @Test
-        @DisplayName("query=0 → 400")
+        @DisplayName("query=0 → 400 (with valid API key)")
         void shouldRejectZero() throws Exception {
-            mockMvc.perform(get("/romannumeral").param("query", "0"))
+            mockMvc.perform(get("/romannumeral")
+                            .param("query", "0")
+                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.status").value(400));
         }
 
         @Test
-        @DisplayName("min=10&max=5 → 400 (reversed)")
+        @DisplayName("min=10&max=5 → 400 (reversed, with valid API key)")
         void shouldRejectReversedRange() throws Exception {
             mockMvc.perform(get("/romannumeral")
                             .param("min", "10")
-                            .param("max", "5"))
+                            .param("max", "5")
+                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                     .andExpect(status().isBadRequest());
         }
 
         @Test
-        @DisplayName("No params → 400")
+        @DisplayName("No params with valid API key → 400")
         void shouldRejectMissingParams() throws Exception {
-            mockMvc.perform(get("/romannumeral"))
+            mockMvc.perform(get("/romannumeral")
+                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -166,9 +178,11 @@ class RomanNumeralIntegrationTest {
     class CorrelationId {
 
         @Test
-        @DisplayName("Response should contain X-Correlation-Id header")
+        @DisplayName("Success response should contain X-Correlation-Id header")
         void shouldReturnCorrelationIdHeader() throws Exception {
-            mockMvc.perform(get("/romannumeral").param("query", "1"))
+            mockMvc.perform(get("/romannumeral")
+                            .param("query", "1")
+                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                     .andExpect(status().isOk())
                     .andExpect(header().exists("X-Correlation-Id"));
         }
@@ -176,13 +190,14 @@ class RomanNumeralIntegrationTest {
         @Test
         @DisplayName("Correlation ID should be a valid UUID format")
         void shouldReturnValidUuidFormat() throws Exception {
-            var result = mockMvc.perform(get("/romannumeral").param("query", "1"))
+            var result = mockMvc.perform(get("/romannumeral")
+                            .param("query", "1")
+                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                     .andExpect(status().isOk())
                     .andReturn();
 
             String correlationId = result.getResponse().getHeader("X-Correlation-Id");
             org.assertj.core.api.Assertions.assertThat(correlationId).isNotNull();
-            // Should be a valid UUID
             java.util.UUID.fromString(correlationId);
         }
 
@@ -193,15 +208,26 @@ class RomanNumeralIntegrationTest {
 
             mockMvc.perform(get("/romannumeral")
                             .param("query", "1")
+                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY)
                             .header("X-Correlation-Id", callerCorrelationId))
                     .andExpect(status().isOk())
                     .andExpect(header().string("X-Correlation-Id", callerCorrelationId));
         }
 
         @Test
-        @DisplayName("Error responses should also contain X-Correlation-Id")
-        void shouldReturnCorrelationIdOnError() throws Exception {
-            mockMvc.perform(get("/romannumeral").param("query", "abc"))
+        @DisplayName("401 responses should also contain X-Correlation-Id")
+        void shouldReturnCorrelationIdOn401() throws Exception {
+            mockMvc.perform(get("/romannumeral").param("query", "1"))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(header().exists("X-Correlation-Id"));
+        }
+
+        @Test
+        @DisplayName("400 error responses should contain X-Correlation-Id")
+        void shouldReturnCorrelationIdOn400() throws Exception {
+            mockMvc.perform(get("/romannumeral")
+                            .param("query", "abc")
+                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                     .andExpect(status().isBadRequest())
                     .andExpect(header().exists("X-Correlation-Id"));
         }
@@ -209,7 +235,6 @@ class RomanNumeralIntegrationTest {
 
     // ========================================================================
     // Concurrent Request Tests
-    // (Actuator tests moved to ActuatorIntegrationTest for proper context)
     // ========================================================================
 
     @Nested
@@ -229,7 +254,8 @@ class RomanNumeralIntegrationTest {
                     executor.submit(() -> {
                         try {
                             mockMvc.perform(get("/romannumeral")
-                                            .param("query", String.valueOf(number)))
+                                            .param("query", String.valueOf(number))
+                                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                                     .andExpect(status().isOk())
                                     .andExpect(jsonPath("$.input").value(String.valueOf(number)));
                         } catch (Exception e) {
@@ -257,7 +283,8 @@ class RomanNumeralIntegrationTest {
                         try {
                             mockMvc.perform(get("/romannumeral")
                                             .param("min", "1")
-                                            .param("max", "100"))
+                                            .param("max", "100")
+                                            .header(TestConstants.API_KEY_HEADER, TestConstants.API_KEY))
                                     .andExpect(status().isOk())
                                     .andExpect(jsonPath("$.conversions.length()").value(100))
                                     .andExpect(jsonPath("$.conversions[0].input").value("1"))

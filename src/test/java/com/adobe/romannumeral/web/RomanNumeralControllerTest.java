@@ -34,7 +34,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * mocks the use cases. Tests HTTP routing, JSON structure, validation, and error responses
  * for both single and range conversion endpoints.
  */
-@WebMvcTest(controllers = RomanNumeralController.class)
+@WebMvcTest(
+        controllers = RomanNumeralController.class,
+        excludeFilters = @org.springframework.context.annotation.ComponentScan.Filter(
+                type = org.springframework.context.annotation.FilterType.ASSIGNABLE_TYPE,
+                classes = {
+                        com.adobe.romannumeral.infrastructure.security.ApiKeyAuthFilter.class,
+                        com.adobe.romannumeral.infrastructure.security.RateLimitFilter.class
+                }
+        )
+)
 @Import({GlobalExceptionHandler.class, SecurityConfig.class})
 @DisplayName("RomanNumeralController")
 class RomanNumeralControllerTest {

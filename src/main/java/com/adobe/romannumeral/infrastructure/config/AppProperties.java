@@ -5,6 +5,8 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.List;
+
 /**
  * Application-specific configuration properties.
  *
@@ -22,4 +24,10 @@ public class AppProperties {
 
     /** Maximum range size for range queries (default: 3999). */
     private int maxRangeSize = 3999;
+
+    /**
+     * Valid API keys for authentication.
+     * Production note: use a secrets manager (Vault, AWS Secrets Manager) instead of config files.
+     */
+    private List<String> apiKeys = List.of();
 }

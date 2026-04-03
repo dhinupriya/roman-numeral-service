@@ -1,11 +1,15 @@
 package com.adobe.romannumeral.integration;
 
+import com.adobe.romannumeral.TestConstants;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration tests for actuator endpoints — health, prometheus, metrics.
  *
- * <p>Uses {@code RANDOM_PORT} with {@code TestRestTemplate} (no MockMvc) to ensure
+ * <p>Uses {@code RANDOM_PORT} with {@code TestRestTemplate} to ensure
  * actuator endpoints are fully initialized including the Prometheus registry.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -22,6 +26,12 @@ class ActuatorIntegrationTest {
 
     @Autowired
     private TestRestTemplate restTemplate;
+
+    private HttpEntity<Void> withApiKey() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(TestConstants.API_KEY_HEADER, TestConstants.API_KEY);
+        return new HttpEntity<>(headers);
+    }
 
     @Nested
     @DisplayName("Health endpoint")
@@ -56,7 +66,8 @@ class ActuatorIntegrationTest {
         @Test
         @DisplayName("Should contain single conversion metrics after a request")
         void shouldContainSingleMetrics() {
-            restTemplate.getForEntity("/romannumeral?query=1", String.class);
+            // Fire request with API key to generate metrics
+            restTemplate.exchange("/romannumeral?query=1", HttpMethod.GET, withApiKey(), String.class);
 
             ResponseEntity<String> response = restTemplate.getForEntity("/actuator/prometheus", String.class);
 
@@ -69,7 +80,7 @@ class ActuatorIntegrationTest {
         @Test
         @DisplayName("Should contain range metrics after a range request")
         void shouldContainRangeMetrics() {
-            restTemplate.getForEntity("/romannumeral?min=1&max=10", String.class);
+            restTemplate.exchange("/romannumeral?min=1&max=10", HttpMethod.GET, withApiKey(), String.class);
 
             ResponseEntity<String> response = restTemplate.getForEntity("/actuator/prometheus", String.class);
 
@@ -82,7 +93,7 @@ class ActuatorIntegrationTest {
         @Test
         @DisplayName("Should contain error metrics after an error request")
         void shouldContainErrorMetrics() {
-            restTemplate.getForEntity("/romannumeral?query=0", String.class);
+            restTemplate.exchange("/romannumeral?query=0", HttpMethod.GET, withApiKey(), String.class);
 
             ResponseEntity<String> response = restTemplate.getForEntity("/actuator/prometheus", String.class);
 

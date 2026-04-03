@@ -34,6 +34,10 @@ server:
 app:
   max-value: 3999
   max-range-size: 3999
+  # API keys for authentication (production: use secrets manager)
+  api-keys:
+    - test-api-key-1
+    - test-api-key-2
 
 # Actuator endpoints
 management:
