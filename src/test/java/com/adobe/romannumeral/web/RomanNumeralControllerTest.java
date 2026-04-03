@@ -438,6 +438,73 @@ class RomanNumeralControllerTest {
                     .andExpect(jsonPath("$.message").value(
                             org.hamcrest.Matchers.containsString("exceeds maximum")));
         }
+
+        @Test
+        @DisplayName("min=-5&max=10 → 400 (negative min)")
+        void shouldRejectNegativeMin() throws Exception {
+            mockMvc.perform(get("/romannumeral")
+                            .param("min", "-5")
+                            .param("max", "10"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("min=&max=10 → 400 (empty min)")
+        void shouldRejectEmptyMin() throws Exception {
+            mockMvc.perform(get("/romannumeral")
+                            .param("min", "")
+                            .param("max", "10"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("Parameter 'min' must not be empty"));
+        }
+
+        @Test
+        @DisplayName("min=1&max= → 400 (empty max)")
+        void shouldRejectEmptyMax() throws Exception {
+            mockMvc.perform(get("/romannumeral")
+                            .param("min", "1")
+                            .param("max", ""))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("Parameter 'max' must not be empty"));
+        }
+    }
+
+    // ========================================================================
+    // 500 Internal Server Error Tests
+    // ========================================================================
+
+    @Nested
+    @DisplayName("Unexpected exceptions → 500")
+    class UnexpectedExceptions {
+
+        @Test
+        @DisplayName("Unexpected RuntimeException from use case → 500 with generic message, no stack trace")
+        void shouldReturn500ForUnexpectedException() throws Exception {
+            when(convertSingleNumberUseCase.execute(1))
+                    .thenThrow(new RuntimeException("Something broke internally"));
+
+            mockMvc.perform(get("/romannumeral").param("query", "1"))
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(jsonPath("$.error").value("Internal Server Error"))
+                    .andExpect(jsonPath("$.message").value("An unexpected error occurred. Please try again later."))
+                    .andExpect(jsonPath("$.status").value(500))
+                    // Must NOT contain stack trace or internal details
+                    .andExpect(jsonPath("$.message").value(
+                            org.hamcrest.Matchers.not(
+                                    org.hamcrest.Matchers.containsString("Something broke internally"))));
+        }
+
+        @Test
+        @DisplayName("NullPointerException from use case → 500 with generic message")
+        void shouldReturn500ForNullPointer() throws Exception {
+            when(convertSingleNumberUseCase.execute(1))
+                    .thenThrow(new NullPointerException());
+
+            mockMvc.perform(get("/romannumeral").param("query", "1"))
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(jsonPath("$.error").value("Internal Server Error"))
+                    .andExpect(jsonPath("$.status").value(500));
+        }
     }
 
     // ========================================================================

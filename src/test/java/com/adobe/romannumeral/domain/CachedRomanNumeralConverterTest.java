@@ -8,6 +8,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -98,6 +103,36 @@ class CachedRomanNumeralConverterTest {
         void shouldRejectNegative() {
             assertThatThrownBy(() -> cached.convert(-1))
                     .isInstanceOf(InvalidInputException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("Thread safety")
+    class ThreadSafety {
+
+        @Test
+        @DisplayName("Concurrent cache reads should all return correct results")
+        void shouldBeThreadSafeForConcurrentReads() throws InterruptedException {
+            AtomicBoolean failed = new AtomicBoolean(false);
+            try (ExecutorService executor = Executors.newFixedThreadPool(8)) {
+                for (int i = 0; i < 200; i++) {
+                    final int number = (i % 3999) + 1;
+                    executor.submit(() -> {
+                        try {
+                            var result = cached.convert(number);
+                            var expected = standard.convert(number);
+                            if (!result.output().equals(expected.output())) {
+                                failed.set(true);
+                            }
+                        } catch (Exception e) {
+                            failed.set(true);
+                        }
+                    });
+                }
+                executor.shutdown();
+                executor.awaitTermination(10, TimeUnit.SECONDS);
+            }
+            assertThat(failed.get()).isFalse();
         }
     }
 }

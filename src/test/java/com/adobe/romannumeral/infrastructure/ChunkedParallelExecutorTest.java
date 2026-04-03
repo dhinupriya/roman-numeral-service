@@ -8,7 +8,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import java.util.concurrent.CompletionException;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Tests for ChunkedParallelExecutor — verifies chunking, ordering, and edge cases.
@@ -135,6 +138,56 @@ class ChunkedParallelExecutorTest {
             assertThat(results).hasSize(11);
             assertThat(results.get(0).input()).isEqualTo("500");
             assertThat(results.get(10).input()).isEqualTo("510");
+        }
+    }
+
+    @Nested
+    @DisplayName("Error handling during execution")
+    class ErrorHandling {
+
+        @Test
+        @DisplayName("Exception in converter mid-range should propagate cleanly")
+        void shouldPropagateConverterException() {
+            var executor = new ChunkedParallelExecutor(2);
+
+            // Converter throws when it hits number 50
+            assertThatThrownBy(() -> executor.executeRange(1, 100, n -> {
+                if (n == 50) {
+                    throw new RuntimeException("Conversion failed at " + n);
+                }
+                return new RomanNumeralResult(String.valueOf(n), "R" + n);
+            })).isInstanceOf(CompletionException.class)
+                    .hasCauseInstanceOf(RuntimeException.class)
+                    .hasRootCauseMessage("Conversion failed at 50");
+        }
+
+        @Test
+        @DisplayName("Exception in first chunk should not leave other threads hanging")
+        void shouldHandleExceptionInFirstChunk() {
+            var executor = new ChunkedParallelExecutor(4);
+
+            // Converter throws immediately on number 1 (first chunk)
+            assertThatThrownBy(() -> executor.executeRange(1, 100, n -> {
+                if (n == 1) {
+                    throw new RuntimeException("Immediate failure");
+                }
+                return new RomanNumeralResult(String.valueOf(n), "R" + n);
+            })).isInstanceOf(CompletionException.class);
+        }
+
+        @Test
+        @DisplayName("Exception in last chunk should still propagate")
+        void shouldHandleExceptionInLastChunk() {
+            var executor = new ChunkedParallelExecutor(4);
+
+            // Converter throws on number 100 (last chunk)
+            assertThatThrownBy(() -> executor.executeRange(1, 100, n -> {
+                if (n == 100) {
+                    throw new RuntimeException("Late failure");
+                }
+                return new RomanNumeralResult(String.valueOf(n), "R" + n);
+            })).isInstanceOf(CompletionException.class)
+                    .hasRootCauseMessage("Late failure");
         }
     }
 

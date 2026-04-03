@@ -106,7 +106,12 @@ class RomanNumeralIntegrationTest {
                     .andExpect(jsonPath("$.conversions[0].input").value("1"))
                     .andExpect(jsonPath("$.conversions[0].output").value("I"))
                     .andExpect(jsonPath("$.conversions[3998].input").value("3999"))
-                    .andExpect(jsonPath("$.conversions[3998].output").value("MMMCMXCIX"));
+                    .andExpect(jsonPath("$.conversions[3998].output").value("MMMCMXCIX"))
+                    // Spot-check middle values
+                    .andExpect(jsonPath("$.conversions[1993].input").value("1994"))
+                    .andExpect(jsonPath("$.conversions[1993].output").value("MCMXCIV"))
+                    .andExpect(jsonPath("$.conversions[41].input").value("42"))
+                    .andExpect(jsonPath("$.conversions[41].output").value("XLII"));
         }
 
         @Test
