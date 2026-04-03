@@ -457,6 +457,11 @@ All significant technical decisions are documented in [`docs/adr/`](docs/adr/):
 | [0005](docs/adr/0005-loki-grafana-over-elk-splunk.md) | Loki + Grafana over ELK/Splunk |
 | [0006](docs/adr/0006-unified-grafana-observability.md) | Unified Grafana for metrics, logs, infra |
 | [0007](docs/adr/0007-api-key-auth-bucket4j-rate-limiting.md) | API Key + Bucket4j Rate Limiting |
+| [0008](docs/adr/0008-github-actions-over-jenkins.md) | GitHub Actions over Jenkins |
+| [0009](docs/adr/0009-k6-over-gatling.md) | k6 over Gatling for Load Testing |
+| [0010](docs/adr/0010-multi-tool-ai-development-guide.md) | Multi-Tool AI Development Guide |
+| [0011](docs/adr/0011-mcp-server-for-ai-composability.md) | MCP Server for AI Composability |
+| [0012](docs/adr/0012-local-code-review-agent.md) | Local Code Review Agent |
 
 ---
 
@@ -476,6 +481,66 @@ All significant technical decisions are documented in [`docs/adr/`](docs/adr/):
 | `spring-boot-starter-test` | JUnit 5, Mockito, MockMvc, AssertJ | Apache 2.0 |
 | `spring-security-test` | Security test utilities | Apache 2.0 |
 | `jacoco-maven-plugin` | Code coverage reports, 80% threshold | EPL 2.0 |
+
+---
+
+## AI Integration
+
+### AI Development Guide (Multi-Tool)
+
+Single source of truth for AI-assisted development: [`docs/ai-development-guide.md`](docs/ai-development-guide.md).
+
+Distributed to all major AI tools via sync script:
+```bash
+./scripts/sync-ai-conventions.sh all      # sync to all tools
+./scripts/sync-ai-conventions.sh claude    # sync to CLAUDE.md only
+./scripts/sync-ai-conventions.sh cursor    # sync to .cursorrules only
+```
+
+| Tool | File | Auto-synced |
+|------|------|-------------|
+| Claude Code | `CLAUDE.md` | ✅ |
+| Cursor | `.cursorrules` | ✅ |
+| GitHub Copilot | `.github/copilot-instructions.md` | ✅ |
+| Gemini | `GEMINI.md` | ✅ |
+| Windsurf | `.windsurfrules` | ✅ |
+
+### MCP Server (AI-Callable Tools)
+
+Any MCP-compatible AI agent can use the conversion service as a tool. See [`mcp-server/README.md`](mcp-server/README.md) for setup.
+
+```bash
+cd mcp-server
+pip install -r requirements.txt
+python server.py  # connects to localhost:8080
+```
+
+Tools: `convert_number`, `convert_range`, `check_health`
+
+### AI Code Review Agent
+
+Reviews code against project conventions using any LLM provider.
+
+```bash
+pip install -r scripts/requirements.txt
+
+# Review entire project
+ANTHROPIC_API_KEY=sk-... python scripts/ai-review.py --all
+
+# Review specific files
+python scripts/ai-review.py src/main/java/.../Controller.java
+
+# Dry run (see what would be sent, no API call)
+python scripts/ai-review.py --all --dry-run
+```
+
+Supports: Anthropic (Claude), OpenAI (GPT), Google (Gemini) — detects which API key is set.
+
+### Data Privacy Notice
+
+- **Code Review Agent**: Sends source code to your configured LLM provider when you explicitly run the script. Warns before sending.
+- **MCP Server**: Calls the local Roman numeral service API only. Does NOT send data to external services.
+- No telemetry. No background calls. No data sent without your explicit action.
 
 ---
 
