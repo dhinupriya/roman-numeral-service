@@ -7,9 +7,91 @@
   "links": [],
   "panels": [
     {
+      "title": "Total Requests",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "roman_conversion_single_total + roman_conversion_range_total",
+          "legendFormat": "Total",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "thresholds": { "steps": [{"color": "green", "value": 0}] } }
+      },
+      "options": { "colorMode": "value", "graphMode": "area" }
+    },
+    {
+      "title": "Error Rate %",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(roman_conversion_error_total[5m])) / (sum(rate(roman_conversion_single_total[5m])) + sum(rate(roman_conversion_range_total[5m]))) * 100",
+          "legendFormat": "Error %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 1},
+              {"color": "red", "value": 5}
+            ]
+          }
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "none" }
+    },
+    {
+      "title": "Uptime",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "process_uptime_seconds",
+          "legendFormat": "Uptime",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s", "thresholds": { "steps": [{"color": "green", "value": 0}] } }
+      },
+      "options": { "colorMode": "value", "graphMode": "none" }
+    },
+    {
+      "title": "Rate Limit Rejections (429s)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(increase(http_server_requests_seconds_count{status=\"429\"}[5m]))",
+          "legendFormat": "429s",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 10},
+              {"color": "red", "value": 100}
+            ]
+          }
+        }
+      },
+      "options": { "colorMode": "value", "graphMode": "area" }
+    },
+    {
       "title": "Single Conversions / sec",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
       "targets": [
         {
           "expr": "rate(roman_conversion_single_total[1m])",
@@ -24,7 +106,7 @@
     {
       "title": "Range Conversions / sec",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
       "targets": [
         {
           "expr": "rate(roman_conversion_range_total[1m])",
@@ -39,7 +121,7 @@
     {
       "title": "Single Conversion Latency (p50, p95, p99)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, rate(roman_conversion_single_duration_seconds_bucket[5m]))",
@@ -64,7 +146,7 @@
     {
       "title": "Range Conversion Latency (p50, p95, p99)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, rate(roman_conversion_range_duration_seconds_bucket[5m]))",
@@ -87,9 +169,31 @@
       }
     },
     {
+      "title": "HTTP Status Code Breakdown",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{uri=\"/romannumeral\"}[1m])",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" },
+        "overrides": [
+          { "matcher": {"id": "byName", "options": "200"}, "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}] },
+          { "matcher": {"id": "byName", "options": "400"}, "properties": [{"id": "color", "value": {"fixedColor": "yellow", "mode": "fixed"}}] },
+          { "matcher": {"id": "byName", "options": "401"}, "properties": [{"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}}] },
+          { "matcher": {"id": "byName", "options": "429"}, "properties": [{"id": "color", "value": {"fixedColor": "purple", "mode": "fixed"}}] },
+          { "matcher": {"id": "byName", "options": "500"}, "properties": [{"id": "color", "value": {"fixedColor": "red", "mode": "fixed"}}] }
+        ]
+      }
+    },
+    {
       "title": "Error Rate by Type",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
       "targets": [
         {
           "expr": "rate(roman_conversion_error_total[1m])",
@@ -104,7 +208,7 @@
     {
       "title": "Range Size Distribution",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
       "targets": [
         {
           "expr": "roman_conversion_range_size_sum / roman_conversion_range_size_count",
@@ -119,33 +223,55 @@
       ]
     },
     {
-      "title": "HTTP Request Rate (All Endpoints)",
+      "title": "JVM Heap Memory",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
-      "targets": [
-        {
-          "expr": "rate(http_server_requests_seconds_count{uri=\"/romannumeral\"}[1m])",
-          "legendFormat": "{{ method }} {{ status }}",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "reqps" }
-      }
-    },
-    {
-      "title": "JVM Memory Usage",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
       "targets": [
         {
           "expr": "jvm_memory_used_bytes{area=\"heap\"}",
-          "legendFormat": "Heap {{ id }}",
+          "legendFormat": "Used {{ id }}",
           "refId": "A"
+        },
+        {
+          "expr": "jvm_memory_max_bytes{area=\"heap\"}",
+          "legendFormat": "Max {{ id }}",
+          "refId": "B"
         }
       ],
       "fieldConfig": {
         "defaults": { "unit": "bytes" }
+      }
+    },
+    {
+      "title": "Active Threads",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 36 },
+      "targets": [
+        {
+          "expr": "jvm_threads_live_threads",
+          "legendFormat": "Live threads",
+          "refId": "A"
+        },
+        {
+          "expr": "jvm_threads_peak_threads",
+          "legendFormat": "Peak threads",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "GC Pause Duration",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 36 },
+      "targets": [
+        {
+          "expr": "rate(jvm_gc_pause_seconds_sum[1m])",
+          "legendFormat": "{{ action }} {{ cause }}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
       }
     }
   ],
@@ -155,5 +281,5 @@
   "time": { "from": "now-1h", "to": "now" },
   "title": "Roman Numeral Service — Application Dashboard",
   "uid": "roman-numeral-app",
-  "version": 1
+  "version": 2
 }
