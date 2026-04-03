@@ -33,6 +33,12 @@
         <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
                 <includeMdcKeyName>correlationId</includeMdcKeyName>
+                <includeMdcKeyName>clientIp</includeMdcKeyName>
+                <includeMdcKeyName>method</includeMdcKeyName>
+                <includeMdcKeyName>uri</includeMdcKeyName>
+                <includeMdcKeyName>status</includeMdcKeyName>
+                <includeMdcKeyName>durationMs</includeMdcKeyName>
+                <includeMdcKeyName>responseSize</includeMdcKeyName>
                 <customFields>{"service":"${appName}"}</customFields>
                 <timeZone>UTC</timeZone>
             </encoder>
