@@ -1,6 +1,13 @@
 # Roman Numeral Conversion Service
 
 [![CI](https://github.com/dhinupriya/roman-numeral-service/actions/workflows/ci.yml/badge.svg)](https://github.com/dhinupriya/roman-numeral-service/actions/workflows/ci.yml)
+![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen?logo=springboot)
+![Tests](https://img.shields.io/badge/Tests-192%20passing-brightgreen?logo=junit5)
+![Coverage](https://img.shields.io/badge/Coverage-94.5%25-brightgreen?logo=jacoco)
+![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)
+![Architecture](https://img.shields.io/badge/Architecture-Clean%2FHexagonal-blueviolet)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
 Production-grade HTTP service that converts integers (1-3999) to Roman numerals. Built with Java 21, Spring Boot 3.4, and Clean Architecture. Supports single conversions and parallel range queries using chunked virtual thread execution.
 
