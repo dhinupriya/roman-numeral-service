@@ -6,6 +6,7 @@ import com.adobe.romannumeral.application.usecase.ConvertSingleNumberUseCase;
 import com.adobe.romannumeral.infrastructure.converter.CachedRomanNumeralConverter;
 import com.adobe.romannumeral.infrastructure.converter.StandardRomanNumeralConverter;
 import com.adobe.romannumeral.infrastructure.execution.ChunkedParallelExecutor;
+import com.adobe.romannumeral.infrastructure.observability.ConversionMetrics;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -42,14 +43,16 @@ public class ConverterConfig {
 
     @Bean
     public ConvertSingleNumberUseCase convertSingleNumberUseCase(
-            CachedRomanNumeralConverter cachedConverter) {
-        return new ConvertSingleNumberUseCase(cachedConverter);
+            CachedRomanNumeralConverter cachedConverter,
+            ConversionMetrics metrics) {
+        return new ConvertSingleNumberUseCase(cachedConverter, metrics);
     }
 
     @Bean
     public ConvertRangeUseCase convertRangeUseCase(
             StandardRomanNumeralConverter standardConverter,
-            ParallelExecutionPort parallelExecutor) {
-        return new ConvertRangeUseCase(standardConverter, parallelExecutor);
+            ParallelExecutionPort parallelExecutor,
+            ConversionMetrics metrics) {
+        return new ConvertRangeUseCase(standardConverter, parallelExecutor, metrics);
     }
 }

@@ -14,9 +14,6 @@ spring:
   # Disable Whitelabel error page — GlobalExceptionHandler handles all errors
   mvc:
     throw-exception-if-no-handler-found: true
-  web:
-    resources:
-      add-mappings: false
 
 server:
   port: 8080
@@ -38,12 +35,20 @@ app:
   max-value: 3999
   max-range-size: 3999
 
-# Actuator endpoints (Phase 3 will expand these)
+# Actuator endpoints
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 
 logging:
   level:

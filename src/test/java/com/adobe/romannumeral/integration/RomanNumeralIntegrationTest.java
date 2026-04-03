@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 
 /**
  * Integration tests — full Spring context, real beans, no mocks.
@@ -155,6 +156,61 @@ class RomanNumeralIntegrationTest {
                     .andExpect(status().isBadRequest());
         }
     }
+
+    // ========================================================================
+    // Observability Tests (Phase 3)
+    // ========================================================================
+
+    @Nested
+    @DisplayName("Correlation ID")
+    class CorrelationId {
+
+        @Test
+        @DisplayName("Response should contain X-Correlation-Id header")
+        void shouldReturnCorrelationIdHeader() throws Exception {
+            mockMvc.perform(get("/romannumeral").param("query", "1"))
+                    .andExpect(status().isOk())
+                    .andExpect(header().exists("X-Correlation-Id"));
+        }
+
+        @Test
+        @DisplayName("Correlation ID should be a valid UUID format")
+        void shouldReturnValidUuidFormat() throws Exception {
+            var result = mockMvc.perform(get("/romannumeral").param("query", "1"))
+                    .andExpect(status().isOk())
+                    .andReturn();
+
+            String correlationId = result.getResponse().getHeader("X-Correlation-Id");
+            org.assertj.core.api.Assertions.assertThat(correlationId).isNotNull();
+            // Should be a valid UUID
+            java.util.UUID.fromString(correlationId);
+        }
+
+        @Test
+        @DisplayName("Should propagate caller-provided correlation ID")
+        void shouldPropagateCallerCorrelationId() throws Exception {
+            String callerCorrelationId = "caller-trace-12345";
+
+            mockMvc.perform(get("/romannumeral")
+                            .param("query", "1")
+                            .header("X-Correlation-Id", callerCorrelationId))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string("X-Correlation-Id", callerCorrelationId));
+        }
+
+        @Test
+        @DisplayName("Error responses should also contain X-Correlation-Id")
+        void shouldReturnCorrelationIdOnError() throws Exception {
+            mockMvc.perform(get("/romannumeral").param("query", "abc"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(header().exists("X-Correlation-Id"));
+        }
+    }
+
+    // ========================================================================
+    // Concurrent Request Tests
+    // (Actuator tests moved to ActuatorIntegrationTest for proper context)
+    // ========================================================================
 
     @Nested
     @DisplayName("Concurrent request safety")

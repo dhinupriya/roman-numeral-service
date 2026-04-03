@@ -1,0 +1,15 @@
+# Dashboard provisioning configuration
+# Tells Grafana to auto-load dashboards from the /dashboards directory
+
+apiVersion: 1
+
+providers:
+  - name: 'default'
+    orgId: 1
+    folder: 'Roman Numeral Service'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false

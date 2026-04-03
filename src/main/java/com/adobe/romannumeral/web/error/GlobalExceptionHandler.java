@@ -1,9 +1,10 @@
 package com.adobe.romannumeral.web.error;
 
-import com.adobe.romannumeral.domain.exception.DomainException;
 import com.adobe.romannumeral.domain.exception.InvalidInputException;
 import com.adobe.romannumeral.domain.exception.InvalidRangeException;
+import com.adobe.romannumeral.infrastructure.observability.ConversionMetrics;
 import com.adobe.romannumeral.web.dto.ErrorResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,26 +20,27 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
  * Global exception handler — maps all exceptions to structured JSON error responses.
  *
  * <p>Ensures every error path returns consistent JSON format, never Spring's default
- * Whitelabel error page or raw stack traces. Handles:
- * <ul>
- *   <li>Domain exceptions (sealed hierarchy) → 400</li>
- *   <li>Spring framework exceptions (missing params, method not allowed, etc.)</li>
- *   <li>Catch-all for unexpected exceptions → 500 (generic message, no stack trace)</li>
- * </ul>
+ * Whitelabel error page or raw stack traces. Records error metrics via
+ * {@link ConversionMetrics} for domain exceptions (visible in Grafana).
  */
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final ConversionMetrics metrics;
 
     @ExceptionHandler(InvalidInputException.class)
     public ResponseEntity<ErrorResponse> handleInvalidInput(InvalidInputException ex) {
         log.warn("Invalid input: {}", ex.getMessage());
+        metrics.recordError("InvalidInput");
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(InvalidRangeException.class)
     public ResponseEntity<ErrorResponse> handleInvalidRange(InvalidRangeException ex) {
         log.warn("Invalid range: {}", ex.getMessage());
+        metrics.recordError("InvalidRange");
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
@@ -71,7 +73,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
-        // Log the full stack trace for debugging, but never expose it to the client
         log.error("Unexpected error", ex);
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR,
                 "An unexpected error occurred. Please try again later.");

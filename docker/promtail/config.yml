@@ -1,0 +1,29 @@
+# Promtail configuration — collects Docker container logs and ships to Loki
+#
+# Promtail reads container logs from Docker's log directory (mounted as a volume)
+# and pushes them to Loki. Grafana then queries Loki for log exploration.
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: docker
+          __path__: /var/log/docker/*/*.log
+
+    # Extract container name from the log file path
+    pipeline_stages:
+      - docker: {}
+      - labeldrop:
+          - filename

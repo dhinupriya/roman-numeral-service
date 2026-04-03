@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!--
+        Profile-based logging configuration:
+        - Default (dev): human-readable console output
+        - Docker profile: structured JSON via logstash-logback-encoder (for Promtail → Loki → Grafana)
+    -->
+
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="roman-numeral-service"/>
+
+    <!-- ======================== -->
+    <!-- Default profile (dev)    -->
+    <!-- ======================== -->
+    <springProfile name="!docker">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <pattern>%d{HH:mm:ss.SSS} [%thread] [%X{correlationId:-}] %-5level %logger{36} - %msg%n</pattern>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+
+        <logger name="com.adobe.romannumeral" level="DEBUG"/>
+    </springProfile>
+
+    <!-- ======================== -->
+    <!-- Docker profile (JSON)    -->
+    <!-- ======================== -->
+    <springProfile name="docker">
+        <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <includeMdcKeyName>correlationId</includeMdcKeyName>
+                <customFields>{"service":"${appName}"}</customFields>
+                <timeZone>UTC</timeZone>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="JSON_CONSOLE"/>
+        </root>
+
+        <logger name="com.adobe.romannumeral" level="DEBUG"/>
+    </springProfile>
+
+</configuration>

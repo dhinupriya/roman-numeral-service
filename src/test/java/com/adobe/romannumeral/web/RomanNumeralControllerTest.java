@@ -7,6 +7,7 @@ import com.adobe.romannumeral.domain.model.RomanNumeralRange;
 import com.adobe.romannumeral.domain.model.RomanNumeralResult;
 import com.adobe.romannumeral.infrastructure.config.AppProperties;
 import com.adobe.romannumeral.infrastructure.config.SecurityConfig;
+import com.adobe.romannumeral.infrastructure.observability.ConversionMetrics;
 import com.adobe.romannumeral.web.controller.RomanNumeralController;
 import com.adobe.romannumeral.web.error.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +50,9 @@ class RomanNumeralControllerTest {
 
     @MockitoBean
     private AppProperties appProperties;
+
+    @MockitoBean
+    private ConversionMetrics conversionMetrics;
 
     @BeforeEach
     void setUp() {
