@@ -34,6 +34,8 @@ This is a **thin HTTP client** — it calls the REST API and returns the result.
 
 ```bash
 cd mcp-server
+python3 -m venv venv
+source venv/bin/activate    # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -55,7 +57,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "roman-numeral": {
-      "command": "python3",
+      "command": "<full-path-to-project>/mcp-server/venv/bin/python3",
       "args": ["<full-path-to-project>/mcp-server/server.py"],
       "env": {
         "SERVICE_URL": "http://localhost:8080",
@@ -70,13 +72,13 @@ Restart Claude Desktop. Ask: *"Convert 1994 to a Roman numeral"*
 
 ### Claude Code (CLI)
 
-> **Important:** Use the full absolute path to `server.py` — relative paths don't work with `claude mcp add`.
+> **Important:** Use full absolute paths — relative paths don't work with `claude mcp add`. Use the venv's python so it finds the installed dependencies.
 
 ```bash
 claude mcp add roman-numeral \
   -e SERVICE_URL=http://localhost:8080 \
   -e API_KEY=test-api-key-1 \
-  -- python3 /full/path/to/roman-numeral-service/mcp-server/server.py
+  -- /full/path/to/mcp-server/venv/bin/python3 /full/path/to/mcp-server/server.py
 ```
 
 Then ask Claude Code: *"Convert 1994 to a Roman numeral"*
@@ -89,7 +91,7 @@ Add to `.cursor/mcp.json` in the project root:
 {
   "mcpServers": {
     "roman-numeral": {
-      "command": "python3",
+      "command": "mcp-server/venv/bin/python3",
       "args": ["mcp-server/server.py"],
       "env": {
         "SERVICE_URL": "http://localhost:8080",
@@ -110,7 +112,7 @@ Add to `.vscode/mcp.json`:
 {
   "servers": {
     "roman-numeral": {
-      "command": "python3",
+      "command": "mcp-server/venv/bin/python3",
       "args": ["mcp-server/server.py"],
       "env": {
         "SERVICE_URL": "http://localhost:8080",
@@ -126,7 +128,7 @@ Add to `.vscode/mcp.json`:
 The server uses stdio transport (standard MCP). Run:
 
 ```bash
-SERVICE_URL=http://localhost:8080 API_KEY=test-api-key-1 python3 mcp-server/server.py
+SERVICE_URL=http://localhost:8080 API_KEY=test-api-key-1 mcp-server/venv/bin/python3 mcp-server/server.py
 ```
 
 Connect your MCP client to stdin/stdout of this process.
