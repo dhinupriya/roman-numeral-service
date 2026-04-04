@@ -333,6 +333,7 @@ Descending value-table approach with 13-entry parallel arrays (7 standard symbol
 | **Decorator** | `CachedConverter` wraps `StandardConverter` | Adds caching without modifying the algorithm class |
 | **Factory Method** | `Response.from()` static methods on DTOs | Mapping logic co-located with DTO |
 | **Value Object** | `RomanNumeralResult`, `RomanNumeralRange` (Java records) | Immutable, self-validating, thread-safe |
+| **Chain of Responsibility** | 4 servlet filters: Correlation → Logging → Auth → RateLimit | Each filter decides to pass or reject — ordered security pipeline |
 
 ### Architecture
 
