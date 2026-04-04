@@ -164,9 +164,10 @@ See [`mcp-server/README.md`](mcp-server/README.md) for Claude Desktop integratio
 
 ### Prerequisites
 
-- Java 21+ ([Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html) or [Eclipse Temurin](https://adoptium.net/))
+- Java 21+
 - Maven 3.9+ (or use included Maven wrapper `./mvnw`)
 - Docker & Docker Compose (for containerized deployment)
+- Python 3.11+ (optional, for AI tools)
 
 ### Run Locally
 
