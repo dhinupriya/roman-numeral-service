@@ -553,15 +553,28 @@ Open the project in your AI IDE — it picks up the conventions automatically.
 
 ### MCP Server (AI-Callable Tools)
 
-Any MCP-compatible AI agent can use the conversion service as a tool. See [`mcp-server/README.md`](mcp-server/README.md) for setup.
+Any MCP-compatible AI agent can use the conversion service as a tool.
+
+**Tools:** `convert_number`, `convert_range` — ask your AI *"Convert 1994 to a Roman numeral"* and it calls your local service.
 
 ```bash
-cd mcp-server
-pip install -r requirements.txt
-python server.py  # connects to localhost:8080
+# 1. Start the service
+./mvnw spring-boot:run
+
+# 2. Install MCP server
+cd mcp-server && pip3 install -r requirements.txt && cd ..
+
+# 3. Connect to your AI tool (pick one):
 ```
 
-Tools: `convert_number`, `convert_range` — focused on AI reasoning capabilities, not operational endpoints.
+| AI Tool | Quick Start |
+|---------|-------------|
+| **Claude Code** | `claude mcp add roman-numeral -- python3 mcp-server/server.py` |
+| **Claude Desktop** | Add to `claude_desktop_config.json` ([details](mcp-server/README.md#claude-desktop)) |
+| **Cursor** | Add to `.cursor/mcp.json` ([details](mcp-server/README.md#cursor)) |
+| **VS Code / Copilot** | Add to `.vscode/mcp.json` ([details](mcp-server/README.md#vs-code-github-copilot-with-mcp-support)) |
+
+Full setup for each tool: [`mcp-server/README.md`](mcp-server/README.md)
 
 ### AI Code Review Agent
 
