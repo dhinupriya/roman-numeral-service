@@ -225,39 +225,35 @@ sequenceDiagram
 sequenceDiagram
     participant App as Roman Numeral Service
     participant Prometheus
-    participant Loki
-    participant Promtail
-    participant Grafana
     participant cAdvisor
     participant NodeExporter
+    participant Promtail
+    participant Loki
+    participant Grafana
 
     Note over App: Application running
-    
-    rect rgb(230, 245, 255)
-        Note right of App: Metrics Flow
-        App->>App: Micrometer records metrics
-        Prometheus->>App: Scrape /actuator/prometheus (every 15s)
-        App-->>Prometheus: roman_conversion_*, jvm_*, http_*
-        Grafana->>Prometheus: Query metrics
-        Prometheus-->>Grafana: App Dashboard (15 panels)
-    end
 
-    rect rgb(255, 245, 230)
-        Note right of App: Infra Metrics Flow
-        cAdvisor->>cAdvisor: Collect container CPU, memory, network
-        NodeExporter->>NodeExporter: Collect host CPU, memory, disk
-        Prometheus->>cAdvisor: Scrape (every 15s)
-        Prometheus->>NodeExporter: Scrape (every 15s)
-        Grafana->>Prometheus: Query infra metrics
-        Prometheus-->>Grafana: Infra Dashboard (7 panels)
-    end
+    Note over App, Grafana: 1. Application Metrics Flow
+    App->>App: Micrometer records business metrics
+    Prometheus->>App: Scrape /actuator/prometheus (every 15s)
+    App-->>Prometheus: roman_conversion_*, jvm_*, http_*
+    Grafana->>Prometheus: Query metrics
+    Prometheus-->>Grafana: App Dashboard (15 panels)
 
-    rect rgb(230, 255, 230)
-        Note right of App: Logs Flow
-        App->>App: Logback JSON → stdout
-        Promtail->>App: Tail container logs (Docker SD)
-        Promtail->>Loki: Push logs
-        Grafana->>Loki: Query logs (LogQL)
-        Loki-->>Grafana: Logs Dashboard (6 panels)
-    end
+    Note over App, Grafana: 2. Infrastructure Metrics Flow
+    cAdvisor->>cAdvisor: Collect container CPU, memory, network
+    NodeExporter->>NodeExporter: Collect host CPU, memory, disk
+    Prometheus->>cAdvisor: Scrape (every 15s)
+    Prometheus->>NodeExporter: Scrape (every 15s)
+    Grafana->>Prometheus: Query infra metrics
+    Prometheus-->>Grafana: Infra Dashboard (7 panels)
+
+    Note over App, Grafana: 3. Logs Flow
+    App->>App: Logback JSON → stdout
+    Promtail->>App: Tail container logs (Docker SD)
+    Promtail->>Loki: Push structured logs
+    Grafana->>Loki: Query logs (LogQL)
+    Loki-->>Grafana: Logs Dashboard (6 panels)
+
+    Note over Grafana: One UI for everything:<br/>App metrics + Infra metrics + Logs
 ```
