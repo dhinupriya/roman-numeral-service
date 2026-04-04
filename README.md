@@ -531,20 +531,25 @@ Pipeline: **Checkout → Build → Test → Coverage Check → Docker Build → 
 
 Single source of truth for AI-assisted development: [`docs/ai-development-guide.md`](docs/ai-development-guide.md).
 
-Distributed to all major AI tools via sync script:
+Generate conventions for your AI tool of choice:
 ```bash
-./scripts/sync-ai-conventions.sh all      # sync to all tools
-./scripts/sync-ai-conventions.sh claude    # sync to CLAUDE.md only
-./scripts/sync-ai-conventions.sh cursor    # sync to .cursorrules only
+./scripts/sync-ai-conventions.sh claude    # if you use Claude Code
+./scripts/sync-ai-conventions.sh cursor    # if you use Cursor
+./scripts/sync-ai-conventions.sh copilot   # if you use GitHub Copilot
+./scripts/sync-ai-conventions.sh gemini    # if you use Gemini
+./scripts/sync-ai-conventions.sh windsurf  # if you use Windsurf
+./scripts/sync-ai-conventions.sh all       # generate all at once
 ```
 
-| Tool | File | Auto-synced |
-|------|------|-------------|
-| Claude Code | `CLAUDE.md` | ✅ |
-| Cursor | `.cursorrules` | ✅ |
-| GitHub Copilot | `.github/copilot-instructions.md` | ✅ |
-| Gemini | `GEMINI.md` | ✅ |
-| Windsurf | `.windsurfrules` | ✅ |
+| Tool | Generated File |
+|------|---------------|
+| Claude Code | `CLAUDE.md` |
+| Cursor | `.cursorrules` |
+| GitHub Copilot | `.github/copilot-instructions.md` |
+| Gemini | `GEMINI.md` |
+| Windsurf | `.windsurfrules` |
+
+Open the project in your AI IDE — it picks up the conventions automatically.
 
 ### MCP Server (AI-Callable Tools)
 
