@@ -260,9 +260,13 @@ Dependencies point inward. Domain has zero framework imports.
 - **Single queries** (`?query=42`): `CachedRomanNumeralConverter` — pre-computed array, O(1) lookup
 - **Range queries** (`?min=1&max=3999`): `StandardRomanNumeralConverter` + `ChunkedParallelExecutor` — real parallel computation using virtual threads, 1 chunk per CPU core
 
+> *Range queries use real parallel computation at request time (not cache reads) to directly satisfy the assessment requirement: "use multithreading to compute the values in the range in parallel." See [ADR-0003](docs/adr/0003-dual-converter-strategy.md) for the full trade-off analysis.*
+
 ### Algorithm
 
 Descending value-table approach with 13-entry parallel arrays (7 standard symbols + 6 subtractive forms). Greedy subtraction, O(1) bounded (max 15 iterations). Hand-written — no libraries.
+
+The algorithm handles subtractive notation (IV, IX, XL, XC, CD, CM) naturally through the table ordering — no special-case logic needed. For example, 1994: subtract 1000→M, subtract 900→CM, subtract 90→XC, subtract 4→IV = **MCMXCIV**.
 
 ---
 
@@ -328,6 +332,8 @@ Descending value-table approach with 13-entry parallel arrays (7 standard symbol
 | `ActuatorIntegrationTest` | 7 | Health, Prometheus metrics, actuator endpoints |
 | `ApiSecurityTest` | 11 | API key auth: missing, invalid, valid, actuator bypass, headers |
 | `RateLimitTest` | 3 | Token-bucket: single 429, range 429, JSON format |
+
+> *Counts reflect parameterized test expansions (e.g., `StandardRomanNumeralConverterTest` has 10 `@Test` methods that expand to 62 tests via `@ParameterizedTest`).*
 
 ### Run Tests
 
