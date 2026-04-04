@@ -1,8 +1,8 @@
 # Roman Numeral Conversion Service
 
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen?logo=githubactions)](https://github.com/dhinupriya/roman-numeral-service/actions/workflows/ci.yml)
-[![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen?logo=springboot)](https://spring.io/projects/spring-boot)
+[![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)](#architecture)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen?logo=springboot)](#architecture)
 [![Tests](https://img.shields.io/badge/Tests-192%20passing-brightgreen?logo=junit5)](#testing-methodology)
 [![Coverage](https://img.shields.io/badge/Coverage-94.5%25-brightgreen?logo=jacoco)](#testing-methodology)
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)](#docker)
