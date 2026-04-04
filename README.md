@@ -137,7 +137,7 @@ All containers stop cleanly.
 
 **AI Code Review Agent:**
 ```bash
-# Setup (one-time)
+# Setup (one-time) — use python3.11 or python3.12 if 'python3' points to an older version
 cd scripts && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && cd ..
 
 # Set your API key
@@ -154,9 +154,10 @@ python3 scripts/ai-review.py src/main/java/com/adobe/romannumeral/web/controller
 ```
 > **Tested with:** Anthropic Claude Sonnet 4 (`claude-sonnet-4-20250514`). Also supports OpenAI (`--model gpt-4o`, requires `OPENAI_API_KEY`) and Google Gemini (`--model gemini-1.5-pro`, requires `GOOGLE_API_KEY`) — these providers are implemented but not tested.
 
-**MCP Server (connect AI agents to the service):**
+**MCP Server (connect AI agents to the service — requires Python 3.11+):**
 ```bash
 # 1. Install MCP server dependencies (one-time setup)
+# Note: use python3.11 or python3.12 if 'python3' points to an older version
 cd mcp-server && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && cd ..
 
 # 2. Make sure the Roman numeral service is running (via mvnw or docker compose)
@@ -598,7 +599,7 @@ cd mcp-server && python3 -m venv venv && source venv/bin/activate && pip install
 Reviews code against `ai-development-guide.md` conventions using any LLM provider.
 
 ```bash
-# Setup (one-time)
+# Setup (one-time) — use python3.11 or python3.12 if 'python3' points to an older version
 cd scripts && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && cd ..
 
 # Set your API key
