@@ -15,6 +15,132 @@ Production-grade HTTP service that converts integers (1-3999) to Roman numerals.
 
 ---
 
+##  Step-by-Step Walkthrough
+
+**Step-by-step guide to verify everything works.** Each step builds on the previous one.
+
+### Step 1: Build & Test (2 minutes)
+```bash
+git clone https://github.com/dhinupriya/roman-numeral-service.git
+cd roman-numeral-service
+./mvnw clean verify
+```
+Expected: **192 tests passing**, JaCoCo coverage ≥ 80%, **BUILD SUCCESS**
+
+### Step 2: Run Locally & Test API (1 minute)
+```bash
+./mvnw spring-boot:run
+```
+In another terminal:
+```bash
+# Single conversion
+curl -H "X-API-Key: test-api-key-1" "localhost:8080/romannumeral?query=1994"
+# → {"input":"1994","output":"MCMXCIV"}
+
+# Range conversion (parallel)
+curl -H "X-API-Key: test-api-key-1" "localhost:8080/romannumeral?min=1&max=10"
+# → {"conversions":[{"input":"1","output":"I"},...{"input":"10","output":"X"}]}
+
+# Full range (3999 values, parallel chunked computation)
+curl -H "X-API-Key: test-api-key-1" "localhost:8080/romannumeral?min=1&max=3999" | head -c 200
+
+# Error handling
+curl "localhost:8080/romannumeral?query=1"           # → 401 (no API key)
+curl -H "X-API-Key: test-api-key-1" "localhost:8080/romannumeral?query=0"    # → 400
+curl -H "X-API-Key: test-api-key-1" "localhost:8080/romannumeral?min=10&max=5"  # → 400
+```
+Stop the app with Ctrl+C.
+
+### Step 3: Swagger UI (30 seconds)
+Start the app again, then open: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+
+Click "Authorize" → enter `test-api-key-1` → "Try it out" on the endpoint.
+
+### Step 4: Health & Metrics (30 seconds)
+```bash
+# Health check (no API key needed)
+curl -s "localhost:8080/actuator/health" | python3 -m json.tool
+
+# Prometheus metrics
+curl -s "localhost:8080/actuator/prometheus" | grep roman_conversion
+```
+Stop the app with Ctrl+C.
+
+### Step 5: Docker Compose — Full Observability Stack (3 minutes)
+```bash
+docker compose up -d
+docker compose ps   # wait until all show "healthy" or "Up" (~45 seconds)
+```
+```bash
+# Test the Dockerized app
+curl -H "X-API-Key: test-api-key-1" "localhost:8080/romannumeral?query=42"
+
+# Generate traffic for dashboards
+for i in $(seq 1 50); do curl -s -H "X-API-Key: test-api-key-1" "localhost:8080/romannumeral?query=$((RANDOM % 3999 + 1))" > /dev/null; done
+curl -s -H "X-API-Key: test-api-key-1" "localhost:8080/romannumeral?min=1&max=3999" > /dev/null
+curl -s -H "X-API-Key: test-api-key-1" "localhost:8080/romannumeral?query=0" > /dev/null
+curl -s "localhost:8080/romannumeral?query=1" > /dev/null
+```
+
+### Step 6: Grafana Dashboards (2 minutes)
+Open [http://localhost:3000](http://localhost:3000) (login: `admin` / `admin`, skip password change)
+
+Navigate to **Roman Numeral Service** folder:
+- **Application Dashboard** → conversion rates, latency p50/p95/p99, errors, JVM
+- **Infrastructure Dashboard** → container CPU, memory, host stats
+- **Logs Dashboard** → log volume, error/warn logs, 401s, 429s
+
+### Step 7: k6 Load Test (5 minutes)
+```bash
+# Run load test (app must be running via docker compose)
+docker compose -f k6/docker-compose.k6.yml run --rm k6-load
+```
+Watch the Grafana App Dashboard in real-time during the test — metrics update live.
+
+### Step 8: Graceful Shutdown
+```bash
+docker compose down
+```
+All containers stop cleanly.
+
+### Step 9: AI Integration (optional, requires Python 3.11+ and an LLM API key)
+
+**AI Development Guide:**
+```bash
+# View the AI conventions source
+cat docs/ai-development-guide.md
+
+# Generate tool-specific convention files locally
+./scripts/sync-ai-conventions.sh all
+```
+
+**AI Code Review Agent:**
+```bash
+pip3 install anthropic   # or: pip3 install openai
+
+# Dry run (see what would be reviewed, no API call)
+python3 scripts/ai-review.py --all --dry-run
+
+# Full review (uses ~$0.19 with Claude Sonnet, ~$0.15 with GPT-4o)
+ANTHROPIC_API_KEY=sk-ant-your-key python3 scripts/ai-review.py --all --model claude-sonnet-4-20250514
+# or
+OPENAI_API_KEY=sk-your-key python3 scripts/ai-review.py --all --model gpt-4o
+```
+
+**MCP Server (connect AI agents to the service):**
+```bash
+# Start the Roman numeral service first
+./mvnw spring-boot:run
+
+# In another terminal
+cd mcp-server
+pip3 install -r requirements.txt
+python3 server.py
+```
+See [`mcp-server/README.md`](mcp-server/README.md) for Claude Desktop integration.
+
+---
+
 ## Table of Contents
 
 - [How to Build and Run](#how-to-build-and-run)
@@ -28,6 +154,7 @@ Production-grade HTTP service that converts integers (1-3999) to Roman numerals.
 - [Load Testing](#load-testing)
 - [Docker](#docker)
 - [CI/CD](#cicd)
+- [AI Integration](#ai-integration)
 - [Architecture Decision Records](#architecture-decision-records)
 - [Dependency Attribution](#dependency-attribution)
 - [Production Roadmap](#production-roadmap)
