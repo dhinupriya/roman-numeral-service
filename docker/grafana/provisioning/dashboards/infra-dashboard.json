@@ -7,106 +7,85 @@
   "links": [],
   "panels": [
     {
-      "title": "Container CPU Usage",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
-      "targets": [
-        {
-          "expr": "rate(container_cpu_usage_seconds_total{name=~\".+\"}[1m])",
-          "legendFormat": "{{ name }}",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "percentunit" }
-      }
-    },
-    {
-      "title": "Container Memory Usage",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
-      "targets": [
-        {
-          "expr": "container_memory_usage_bytes{name=~\".+\"}",
-          "legendFormat": "{{ name }}",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "bytes" }
-      }
-    },
-    {
-      "title": "Network I/O (All Containers)",
-      "description": "Aggregate network throughput. Per-container breakdown available on Linux; Docker Desktop aggregates network metrics.",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
-      "targets": [
-        {
-          "expr": "sum(rate(container_network_receive_bytes_total{interface!=\"\"}[1m]))",
-          "legendFormat": "Receive (RX)",
-          "refId": "A"
-        },
-        {
-          "expr": "sum(rate(container_network_transmit_bytes_total{interface!=\"\"}[1m]))",
-          "legendFormat": "Transmit (TX)",
-          "refId": "B"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "Bps" }
-      }
-    },
-    {
-      "title": "Host CPU Usage",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "title": "Host CPU",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 4, "x": 0, "y": 0 },
       "targets": [
         {
           "expr": "1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[1m]))",
-          "legendFormat": "CPU Usage %",
           "refId": "A"
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "percentunit", "max": 1 }
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 0.7},
+              {"color": "red", "value": 0.9}
+            ]
+          }
+        }
       }
     },
     {
-      "title": "Host Memory Usage",
-      "type": "stat",
-      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 16 },
+      "title": "Host Memory",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 4, "x": 4, "y": 0 },
       "targets": [
         {
           "expr": "1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)",
-          "legendFormat": "Used",
           "refId": "A"
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "percentunit", "max": 1 }
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 0.7},
+              {"color": "red", "value": 0.9}
+            ]
+          }
+        }
       }
     },
     {
-      "title": "Host Disk Usage",
-      "type": "stat",
-      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 16 },
+      "title": "Host Disk",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 4, "x": 8, "y": 0 },
       "targets": [
         {
           "expr": "1 - (node_filesystem_avail_bytes{device=~\"/dev/.+\"} / node_filesystem_size_bytes{device=~\"/dev/.+\"})",
-          "legendFormat": "Used",
           "refId": "A"
         }
       ],
       "fieldConfig": {
-        "defaults": { "unit": "percentunit", "max": 1 }
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 0.7},
+              {"color": "red", "value": 0.9}
+            ]
+          }
+        }
       }
     },
     {
       "title": "Container Count & Uptime",
-      "description": "Number of running containers and how long each has been running.",
+      "description": "Running containers and how long each has been up.",
       "type": "table",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "targets": [
         {
           "expr": "time() - container_start_time_seconds{name=~\"roman-numeral.*\"}",
@@ -130,6 +109,72 @@
         "showHeader": true,
         "sortBy": [{ "displayName": "Value", "desc": true }]
       }
+    },
+    {
+      "title": "Container CPU Usage (trend)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{name=~\".+\"}[1m])",
+          "legendFormat": "{{ name }}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit" }
+      }
+    },
+    {
+      "title": "Container Memory Usage (trend)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "container_memory_usage_bytes{name=~\".+\"}",
+          "legendFormat": "{{ name }}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes" }
+      }
+    },
+    {
+      "title": "Network I/O (All Containers)",
+      "description": "Aggregate network throughput. Per-container breakdown available on Linux; Docker Desktop aggregates network metrics.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "sum(rate(container_network_receive_bytes_total{interface!=\"\"}[1m]))",
+          "legendFormat": "Receive (RX)",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(container_network_transmit_bytes_total{interface!=\"\"}[1m]))",
+          "legendFormat": "Transmit (TX)",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "Bps" }
+      }
+    },
+    {
+      "title": "Host CPU (trend)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[1m]))",
+          "legendFormat": "CPU Usage %",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit", "max": 1 }
+      }
     }
   ],
   "schemaVersion": 39,
@@ -138,5 +183,5 @@
   "time": { "from": "now-1h", "to": "now" },
   "title": "Roman Numeral Service — Infrastructure Dashboard",
   "uid": "roman-numeral-infra",
-  "version": 2
+  "version": 3
 }
