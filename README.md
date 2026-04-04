@@ -126,11 +126,13 @@ All containers stop cleanly.
 
 **AI Development Guide:**
 ```bash
-# View the AI conventions source
-cat docs/ai-development-guide.md
-
-# Generate tool-specific convention files locally
-./scripts/sync-ai-conventions.sh all
+# Generate conventions for your AI tool
+./scripts/sync-ai-conventions.sh claude    # if you use Claude Code
+./scripts/sync-ai-conventions.sh cursor    # if you use Cursor
+./scripts/sync-ai-conventions.sh copilot   # if you use GitHub Copilot
+./scripts/sync-ai-conventions.sh gemini    # if you use Gemini
+./scripts/sync-ai-conventions.sh windsurf  # if you use Windsurf
+./scripts/sync-ai-conventions.sh all       # generate all at once
 ```
 
 **AI Code Review Agent:**
