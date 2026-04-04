@@ -646,7 +646,7 @@ pip install -r requirements.txt
 python server.py  # connects to localhost:8080
 ```
 
-Tools: `convert_number`, `convert_range`, `check_health`
+Tools: `convert_number`, `convert_range` — focused on AI reasoning capabilities, not operational endpoints.
 
 ### AI Code Review Agent
 

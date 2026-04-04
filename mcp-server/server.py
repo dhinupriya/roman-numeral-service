@@ -92,14 +92,6 @@ async def list_tools() -> list[Tool]:
                 "required": ["min", "max"],
             },
         ),
-        Tool(
-            name="check_health",
-            description="Check the health status of the Roman numeral conversion service.",
-            inputSchema={
-                "type": "object",
-                "properties": {},
-            },
-        ),
     ]
 
 
@@ -135,10 +127,6 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             }))]
 
         result = _safe_request("/romannumeral", {"min": min_val, "max": max_val})
-        return [TextContent(type="text", text=json.dumps(result["body"], indent=2))]
-
-    elif name == "check_health":
-        result = _safe_request("/actuator/health", {})
         return [TextContent(type="text", text=json.dumps(result["body"], indent=2))]
 
     else:

@@ -22,7 +22,6 @@ This is a **thin HTTP client** — it calls the REST API and returns the result.
 |------|-------------|---------|
 | `convert_number` | Convert a single integer (1-3999) to Roman numeral | `convert_number(1994)` → `MCMXCIV` |
 | `convert_range` | Convert a range to Roman numerals (parallel) | `convert_range(1, 10)` → 10 conversions |
-| `check_health` | Check service health status | `check_health()` → UP |
 
 ## Setup
 
