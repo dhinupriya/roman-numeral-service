@@ -332,15 +332,14 @@ Descending value-table approach with 13-entry parallel arrays (7 standard symbol
 | **Strategy** | `RomanNumeralConverter` interface with 2 implementations | Open/Closed — swap converters without touching use cases |
 | **Decorator** | `CachedConverter` wraps `StandardConverter` | Adds caching without modifying the algorithm class |
 | **Factory Method** | `Response.from()` static methods on DTOs | Mapping logic co-located with DTO |
-| **Value Object** | `RomanNumeralResult`, `RomanNumeralRange` (records) | Immutable, self-validating, thread-safe |
+| **Value Object** | `RomanNumeralResult`, `RomanNumeralRange` (Java records) | Immutable, self-validating, thread-safe |
 
-### Architectural Patterns
+### Architecture
 
 | Pattern | Where | Why |
 |---------|-------|-----|
-| **Clean/Hexagonal** | Domain → Application → Infrastructure layers | Domain has zero framework deps, testable in isolation |
-| **Port/Adapter** | `RomanNumeralConverter`, `ParallelExecutionPort` (ports) + infrastructure adapters | Swap implementations without touching business logic |
-| **Constructor Injection** | `@RequiredArgsConstructor` + explicit `ConverterConfig` | Testable, immutable, explicit wiring in one file |
+| **Clean/Hexagonal (Port/Adapter)** | Domain ports (`RomanNumeralConverter`, `ParallelExecutionPort`) + infrastructure adapters | Domain has zero framework deps. Swap implementations without touching business logic. |
+| **Constructor DI** | `@RequiredArgsConstructor` + explicit `ConverterConfig` | All wiring in one file. Testable, immutable fields, no @Primary/@Qualifier. |
 
 ---
 
