@@ -571,10 +571,7 @@ Pipeline: **Checkout → Build → Test → Coverage Check → Docker Build → 
 - Quality gate: JaCoCo ≥ 80% line coverage
 - Test + coverage reports archived as artifacts
 - Docker push optional (requires `DOCKER_USERNAME`/`DOCKER_PASSWORD` secrets)
-
-### Jenkins (Bonus)
-
-`Jenkinsfile` included for enterprise CI/CD demonstration. Same stages as GitHub Actions.
+- `Jenkinsfile` also included for enterprise CI/CD environments (same stages — see [ADR-0008](docs/adr/0008-github-actions-over-jenkins.md) for decision rationale)
 
 ---
 
