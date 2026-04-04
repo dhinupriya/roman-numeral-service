@@ -677,20 +677,36 @@ Supports: Anthropic (Claude), OpenAI (GPT), Google (Gemini) — detects which AP
 
 ## Production Roadmap
 
-Features documented but not implemented (appropriate for production, overkill for assessment):
+Prioritized list of what a principal engineer would add before and after going to production.
 
-### API Enhancements
-- **Pagination**: Not implemented because the client already controls range size via `min`/`max` parameters — effectively client-driven pagination. Max range (3999 values) compresses to ~20KB with gzip. For larger datasets, would add `StreamingResponseBody` for memory-efficient streaming instead of explicit pagination.
-- **ETag / Conditional Requests**: Roman numerals are immutable — `ETag` header would enable client-side caching with `304 Not Modified`, saving bandwidth on repeated requests.
-- **Content-Type Negotiation**: Support `Accept: text/csv` for bulk downloads alongside JSON.
+### P0 — Before Production (Must Have)
 
-### Infrastructure
-- **Kubernetes + Helm**: Deployment manifests, auto-scaling, liveness/readiness probes (Docker image is K8s-ready with HEALTHCHECK + graceful shutdown)
-- **OAuth2/JWT**: At API Gateway layer (Kong, AWS API Gateway) for multi-tenant auth
-- **mTLS**: Service mesh (Istio, Linkerd) for network-level encryption
-- **WAF**: Cloud provider (AWS WAF, Cloudflare) for DDoS and bot protection
-- **Distributed Tracing**: OpenTelemetry integration (correlation ID provides basic tracing)
-- **Database-backed API keys**: For dynamic key management and revocation
+| Item | Details |
+|------|---------|
+| **Alerting** | Grafana alerting rules routed to PagerDuty/Slack. Key thresholds: error rate > 1% (5 min), single p95 > 50ms (5 min), range p95 > 200ms (5 min), JVM heap > 80% warning / > 90% critical, container restarts > 0, 429 rejection rate > 30% (10 min), host CPU > 85%, host memory > 90%, host disk > 85%. |
+| **Secrets Management** | Move API keys from `application.yml` to HashiCorp Vault or AWS Secrets Manager. No secrets in config files or environment variables in production. |
+| **HTTPS / TLS Termination** | TLS at load balancer or API Gateway. HSTS header is already configured — needs actual HTTPS to activate. |
+
+### P1 — First Month in Production
+
+| Item | Details |
+|------|---------|
+| **Kubernetes + Helm** | Deployment manifests, HPA auto-scaling, liveness/readiness probes. Docker image is already K8s-ready (HEALTHCHECK, graceful shutdown, non-root user, externalized config). |
+| **OAuth2 / JWT** | At API Gateway layer (Kong, AWS API Gateway) for multi-tenant authentication. API key auth is sufficient for single-tenant; OAuth2 needed for multiple consumers with different scopes. |
+| **Distributed Tracing** | OpenTelemetry integration for cross-service tracing. Correlation ID provides basic single-service tracing — OpenTelemetry extends it across service boundaries. |
+
+### P2 — As Needed
+
+| Item | Details |
+|------|---------|
+| **WAF** | Cloud provider WAF (AWS WAF, Cloudflare) for DDoS and bot protection. Only needed if internet-facing. |
+| **mTLS** | Service mesh (Istio, Linkerd) for network-level encryption between services. Only needed in multi-service architectures. |
+| **Streaming Response** | `StreamingResponseBody` for memory-efficient large range responses. Not needed at current max (3999 values = ~20KB compressed). |
+| **ETag / Conditional Requests** | Roman numerals are immutable — `ETag` would enable client caching with `304 Not Modified`. Reduces bandwidth on repeated requests. |
+
+### Pagination — Why Not Implemented
+
+The client already controls range size via `min`/`max` parameters — effectively client-driven pagination. Max range (3999 values) compresses to ~20KB with gzip. Adding server-side pagination would change the API contract from what the assessment specifies.
 
 ---
 
