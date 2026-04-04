@@ -1,13 +1,12 @@
 # Roman Numeral Conversion Service
 
-[![CI](https://img.shields.io/badge/CI-passing-brightgreen?logo=githubactions)](https://github.com/dhinupriya/roman-numeral-service/actions/workflows/ci.yml)
-[![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)](#architecture)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen?logo=springboot)](#architecture)
-[![Tests](https://img.shields.io/badge/Tests-192%20passing-brightgreen?logo=junit5)](#testing-methodology)
-[![Coverage](https://img.shields.io/badge/Coverage-94.5%25-brightgreen?logo=jacoco)](#testing-methodology)
-[![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)](#docker)
-[![Architecture](https://img.shields.io/badge/Architecture-Clean%2FHexagonal-blueviolet)](#architecture)
-[![License](https://img.shields.io/badge/License-MIT-yellow)](#dependency-attribution)
+[![CI](https://github.com/dhinupriya/roman-numeral-service/actions/workflows/ci.yml/badge.svg)](https://github.com/dhinupriya/roman-numeral-service/actions/workflows/ci.yml)
+[![Java 21](https://img.shields.io/badge/Java-21-orange?logo=openjdk)](https://github.com/dhinupriya/roman-numeral-service/blob/main/docs/adr/0002-java21-spring-boot-3.4.md)
+[![Spring Boot 3.4.1](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen?logo=springboot)](https://github.com/dhinupriya/roman-numeral-service/blob/main/docs/adr/0002-java21-spring-boot-3.4.md)
+[![Tests](https://img.shields.io/badge/Tests-192%20passing-brightgreen?logo=junit5)](https://github.com/dhinupriya/roman-numeral-service/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/Coverage-94.9%25-brightgreen?logo=jacoco)](https://github.com/dhinupriya/roman-numeral-service/actions/workflows/ci.yml)
+[![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)](https://github.com/dhinupriya/roman-numeral-service/blob/main/docker-compose.yml)
+[![Architecture](https://img.shields.io/badge/Architecture-Clean%2FHexagonal-blueviolet)](https://github.com/dhinupriya/roman-numeral-service/blob/main/docs/adr/0001-clean-hexagonal-architecture.md)
 
 Production-grade HTTP service that converts integers (1-3999) to Roman numerals. Built with Java 21, Spring Boot 3.4, and Clean Architecture. Supports single conversions and parallel range queries using chunked virtual thread execution.
 
