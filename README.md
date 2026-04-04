@@ -135,16 +135,22 @@ cat docs/ai-development-guide.md
 
 **AI Code Review Agent:**
 ```bash
-pip3 install anthropic   # or: pip3 install openai
+# Setup (one-time)
+cd scripts && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && cd ..
+
+# Set your API key
+export ANTHROPIC_API_KEY=sk-ant-your-key
 
 # Dry run (see what would be reviewed, no API call)
 python3 scripts/ai-review.py --all --dry-run
 
-# Full review (uses ~$0.19 with Claude Sonnet, ~$0.15 with GPT-4o)
-ANTHROPIC_API_KEY=sk-ant-your-key python3 scripts/ai-review.py --all --model claude-sonnet-4-20250514
-# or
-OPENAI_API_KEY=sk-your-key python3 scripts/ai-review.py --all --model gpt-4o
+# Review entire project (~$0.19 with Sonnet)
+python3 scripts/ai-review.py --all --model claude-sonnet-4-20250514
+
+# Review a single file (~$0.03)
+python3 scripts/ai-review.py src/main/java/com/adobe/romannumeral/web/controller/RomanNumeralController.java --model claude-sonnet-4-20250514
 ```
+> **Tested with:** Anthropic Claude Sonnet 4 (`claude-sonnet-4-20250514`). Also supports OpenAI (`--model gpt-4o`, requires `OPENAI_API_KEY`) and Google Gemini (`--model gemini-1.5-pro`, requires `GOOGLE_API_KEY`) — these providers are implemented but not tested.
 
 **MCP Server (connect AI agents to the service):**
 ```bash
@@ -587,22 +593,26 @@ cd mcp-server && python3 -m venv venv && source venv/bin/activate && pip install
 
 ### AI Code Review Agent
 
-Reviews code against project conventions using any LLM provider.
+Reviews code against `ai-development-guide.md` conventions using any LLM provider.
 
 ```bash
-pip install -r scripts/requirements.txt
+# Setup (one-time)
+cd scripts && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && cd ..
 
-# Review entire project
-ANTHROPIC_API_KEY=sk-... python scripts/ai-review.py --all
-
-# Review specific files
-python scripts/ai-review.py src/main/java/.../Controller.java
+# Set your API key
+export ANTHROPIC_API_KEY=sk-ant-your-key
 
 # Dry run (see what would be sent, no API call)
-python scripts/ai-review.py --all --dry-run
+python3 scripts/ai-review.py --all --dry-run
+
+# Review entire project (~$0.19 with Sonnet)
+python3 scripts/ai-review.py --all --model claude-sonnet-4-20250514
+
+# Review a single file (~$0.03)
+python3 scripts/ai-review.py src/main/java/com/adobe/romannumeral/web/controller/RomanNumeralController.java --model claude-sonnet-4-20250514
 ```
 
-Supports: Anthropic (Claude), OpenAI (GPT), Google (Gemini) — detects which API key is set.
+**Tested with:** Anthropic Claude Sonnet 4. The script also supports OpenAI (`--model gpt-4o`) and Google Gemini (`--model gemini-1.5-pro`) — provider is auto-detected from which API key is set. OpenAI and Gemini are implemented but not tested.
 
 ### Data Privacy Notice
 
