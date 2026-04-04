@@ -325,17 +325,22 @@ Descending value-table approach with 13-entry parallel arrays (7 standard symbol
 - **DRY** — shared `FilterResponseHelper` for filter error responses
 - **YAGNI** — no pagination (not required), sequential cache build (4ms not worth parallelizing)
 
-### Design Patterns Used (7)
+### Design Patterns
 
 | Pattern | Where | Why |
 |---------|-------|-----|
-| **Strategy** | `RomanNumeralConverter` interface | Open/Closed — swap implementations |
-| **Decorator** | `CachedConverter` wraps `StandardConverter` | Adds caching without modifying algorithm |
+| **Strategy** | `RomanNumeralConverter` interface with 2 implementations | Open/Closed — swap converters without touching use cases |
+| **Decorator** | `CachedConverter` wraps `StandardConverter` | Adds caching without modifying the algorithm class |
+| **Factory Method** | `Response.from()` static methods on DTOs | Mapping logic co-located with DTO |
 | **Value Object** | `RomanNumeralResult`, `RomanNumeralRange` (records) | Immutable, self-validating, thread-safe |
-| **Port/Adapter** | Domain ports + infrastructure adapters | Framework-free domain |
-| **Use Case** | `ConvertSingleNumberUseCase`, `ConvertRangeUseCase` | Single responsibility per workflow |
-| **Factory Method** | `Response.from()` on DTOs | Mapping logic co-located with DTO |
-| **DI (Constructor)** | `@RequiredArgsConstructor` + explicit `ConverterConfig` | Testable, explicit wiring |
+
+### Architectural Patterns
+
+| Pattern | Where | Why |
+|---------|-------|-----|
+| **Clean/Hexagonal** | Domain → Application → Infrastructure layers | Domain has zero framework deps, testable in isolation |
+| **Port/Adapter** | `RomanNumeralConverter`, `ParallelExecutionPort` (ports) + infrastructure adapters | Swap implementations without touching business logic |
+| **Constructor Injection** | `@RequiredArgsConstructor` + explicit `ConverterConfig` | Testable, immutable, explicit wiring in one file |
 
 ---
 
