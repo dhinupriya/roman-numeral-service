@@ -1,12 +1,10 @@
 # Roman Numeral Conversion Service
 
 [![CI](https://github.com/dhinupriya/roman-numeral-service/actions/workflows/ci.yml/badge.svg)](https://github.com/dhinupriya/roman-numeral-service/actions/workflows/ci.yml)
-[![Java 21](https://img.shields.io/badge/Java-21-orange?logo=openjdk)](https://github.com/dhinupriya/roman-numeral-service/blob/main/docs/adr/0002-java21-spring-boot-3.4.md)
-[![Spring Boot 3.4.1](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen?logo=springboot)](https://github.com/dhinupriya/roman-numeral-service/blob/main/docs/adr/0002-java21-spring-boot-3.4.md)
+[![Java 21](https://img.shields.io/badge/Java-21-orange?logo=openjdk)](https://docs.oracle.com/en/java/javase/21/)
+[![Spring Boot 3.4.1](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen?logo=springboot)](https://docs.spring.io/spring-boot/3.4/)
 [![Tests](https://img.shields.io/badge/Tests-192%20passing-brightgreen?logo=junit5)](https://github.com/dhinupriya/roman-numeral-service/actions/workflows/ci.yml)
 [![Coverage](https://img.shields.io/badge/Coverage-94.9%25-brightgreen?logo=jacoco)](https://github.com/dhinupriya/roman-numeral-service/actions/workflows/ci.yml)
-[![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)](https://github.com/dhinupriya/roman-numeral-service/blob/main/docker-compose.yml)
-[![Architecture](https://img.shields.io/badge/Architecture-Clean%2FHexagonal-blueviolet)](https://github.com/dhinupriya/roman-numeral-service/blob/main/docs/adr/0001-clean-hexagonal-architecture.md)
 
 Production-grade HTTP service that converts integers (1-3999) to Roman numerals. Built with Java 21, Spring Boot 3.4, and Clean Architecture. Supports single conversions and parallel range queries using chunked virtual thread execution.
 
@@ -14,9 +12,31 @@ Production-grade HTTP service that converts integers (1-3999) to Roman numerals.
 
 ---
 
-##  Step-by-Step Walkthrough
+## Table of Contents
 
-**Step-by-step guide to verify everything works.** Each step builds on the previous one.
+- [Step-by-Step Walkthrough](#step-by-step-walkthrough)
+- [API Documentation](#api-documentation)
+- [Architecture](#architecture)
+- [Engineering Methodology](#engineering-methodology)
+- [Testing Methodology](#testing-methodology)
+- [Packaging Layout](#packaging-layout)
+- [Observability](#observability)
+- [Security](#security)
+- [Load Testing](#load-testing)
+- [Docker](#docker)
+- [CI/CD](#cicd)
+- [AI Integration](#ai-integration)
+- [Architecture Decision Records](#architecture-decision-records)
+- [Dependency Attribution](#dependency-attribution)
+- [Production Roadmap](#production-roadmap)
+
+---
+
+## Step-by-Step Walkthrough
+
+**Prerequisites:** Java 21+, Maven 3.9+ (or use `./mvnw`), Docker & Docker Compose, Python 3.11+ (optional, for AI tools)
+
+Each step builds on the previous one.
 
 ### Step 1: Build & Test (2 minutes)
 ```bash
@@ -137,76 +157,6 @@ pip3 install -r requirements.txt
 python3 server.py
 ```
 See [`mcp-server/README.md`](mcp-server/README.md) for Claude Desktop integration.
-
----
-
-## Table of Contents
-
-- [How to Build and Run](#how-to-build-and-run)
-- [API Documentation](#api-documentation)
-- [Architecture](#architecture)
-- [Engineering Methodology](#engineering-methodology)
-- [Testing Methodology](#testing-methodology)
-- [Packaging Layout](#packaging-layout)
-- [Observability](#observability)
-- [Security](#security)
-- [Load Testing](#load-testing)
-- [Docker](#docker)
-- [CI/CD](#cicd)
-- [AI Integration](#ai-integration)
-- [Architecture Decision Records](#architecture-decision-records)
-- [Dependency Attribution](#dependency-attribution)
-- [Production Roadmap](#production-roadmap)
-
----
-
-## How to Build and Run
-
-### Prerequisites
-
-- Java 21+
-- Maven 3.9+ (or use included Maven wrapper `./mvnw`)
-- Docker & Docker Compose (for containerized deployment)
-- Python 3.11+ (optional, for AI tools)
-
-### Run Locally
-
-```bash
-# Build and run all tests (including JaCoCo 80% coverage gate)
-./mvnw clean verify
-
-# Start the application
-./mvnw spring-boot:run
-
-# Test single conversion
-curl -H "X-API-Key: test-api-key-1" "localhost:8080/romannumeral?query=1994"
-# → {"input":"1994","output":"MCMXCIV"}
-
-# Test range conversion (parallel)
-curl -H "X-API-Key: test-api-key-1" "localhost:8080/romannumeral?min=1&max=10"
-# → {"conversions":[{"input":"1","output":"I"},{"input":"2","output":"II"},...]}
-```
-
-### Run with Docker Compose
-
-```bash
-docker compose up -d
-
-# Wait ~45 seconds for all services to be healthy
-# (Loki and Prometheus have healthchecks — the app waits for them before starting)
-docker compose ps   # all should show "healthy" or "Up"
-
-# Test (same API key)
-curl -H "X-API-Key: test-api-key-1" "localhost:8080/romannumeral?query=42"
-
-# Open Grafana dashboards
-open http://localhost:3000  # admin/admin
-
-# Stop
-docker compose down
-```
-
-> **Note:** First startup takes ~45-60 seconds. Loki initializes its storage and Prometheus starts scraping before the application and Grafana launch. Subsequent startups are faster. All services have healthchecks — `docker compose ps` shows status.
 
 ---
 
@@ -496,16 +446,10 @@ Request → CorrelationId → Logging → API Key Auth → Rate Limit → Securi
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `Cache-Control: no-cache, no-store`
-- `Strict-Transport-Security` (HTTPS only)
+- `Strict-Transport-Security` (activates when served over HTTPS)
 - CORS: deny all cross-origin by default
 
-### Production Recommendations (Tier 3)
-
-| Layer | Where | Recommendation |
-|-------|-------|---------------|
-| OAuth2/JWT | API Gateway (Kong, AWS) | Multi-tenant environments |
-| mTLS | Service mesh (Istio) | Network-level encryption |
-| WAF | Cloud provider (AWS WAF) | DDoS, bot filtering |
+> **Production security recommendations** (OAuth2/JWT, mTLS, WAF) are documented in the [Production Roadmap](#production-roadmap).
 
 ---
 
@@ -575,46 +519,6 @@ Pipeline: **Checkout → Build → Test → Coverage Check → Docker Build → 
 
 ---
 
-## Architecture Decision Records
-
-All significant technical decisions are documented in [`docs/adr/`](docs/adr/):
-
-| ADR | Decision |
-|-----|----------|
-| [0001](docs/adr/0001-clean-hexagonal-architecture.md) | Clean/Hexagonal Architecture over Layered |
-| [0002](docs/adr/0002-java21-spring-boot-3.4.md) | Java 21 + Spring Boot 3.4.1 |
-| [0003](docs/adr/0003-dual-converter-strategy.md) | Dual Converter Strategy (Cached + Standard) |
-| [0004](docs/adr/0004-chunked-parallelism.md) | Chunked Parallelism (CPU-core-based) |
-| [0005](docs/adr/0005-loki-grafana-over-elk-splunk.md) | Loki + Grafana over ELK/Splunk |
-| [0006](docs/adr/0006-unified-grafana-observability.md) | Unified Grafana for metrics, logs, infra |
-| [0007](docs/adr/0007-api-key-auth-bucket4j-rate-limiting.md) | API Key + Bucket4j Rate Limiting |
-| [0008](docs/adr/0008-github-actions-over-jenkins.md) | GitHub Actions over Jenkins |
-| [0009](docs/adr/0009-k6-over-gatling.md) | k6 over Gatling for Load Testing |
-| [0010](docs/adr/0010-multi-tool-ai-development-guide.md) | Multi-Tool AI Development Guide |
-| [0011](docs/adr/0011-mcp-server-for-ai-composability.md) | MCP Server for AI Composability |
-| [0012](docs/adr/0012-local-code-review-agent.md) | Local Code Review Agent |
-
----
-
-## Dependency Attribution
-
-| Dependency | Purpose | License |
-|-----------|---------|---------|
-| `spring-boot-starter-web` | Embedded Tomcat, Spring MVC, JSON serialization | Apache 2.0 |
-| `spring-boot-starter-actuator` | Health, info, metrics, prometheus endpoints | Apache 2.0 |
-| `spring-boot-starter-security` | Security headers, CORS, filter chain | Apache 2.0 |
-| `spring-boot-starter-validation` | Jakarta Bean Validation (Hibernate Validator) | Apache 2.0 |
-| `micrometer-registry-prometheus` | Prometheus metrics format (Grafana) | Apache 2.0 |
-| `logstash-logback-encoder` | JSON-structured logging (Loki) | Apache 2.0 |
-| `springdoc-openapi-starter-webmvc-ui` | OpenAPI 3.1 spec + Swagger UI | Apache 2.0 |
-| `bucket4j-core` | Token-bucket rate limiting | Apache 2.0 |
-| `lombok` | `@Slf4j`, `@RequiredArgsConstructor` | MIT |
-| `spring-boot-starter-test` | JUnit 5, Mockito, MockMvc, AssertJ | Apache 2.0 |
-| `spring-security-test` | Security test utilities | Apache 2.0 |
-| `jacoco-maven-plugin` | Code coverage reports, 80% threshold | EPL 2.0 |
-
----
-
 ## AI Integration
 
 ### AI Development Guide (Multi-Tool)
@@ -672,6 +576,46 @@ Supports: Anthropic (Claude), OpenAI (GPT), Google (Gemini) — detects which AP
 - **Code Review Agent**: Sends source code to your configured LLM provider when you explicitly run the script. Warns before sending.
 - **MCP Server**: Calls the local Roman numeral service API only. Does NOT send data to external services.
 - No telemetry. No background calls. No data sent without your explicit action.
+
+---
+
+## Architecture Decision Records
+
+All significant technical decisions are documented in [`docs/adr/`](docs/adr/):
+
+| ADR | Decision |
+|-----|----------|
+| [0001](docs/adr/0001-clean-hexagonal-architecture.md) | Clean/Hexagonal Architecture over Layered |
+| [0002](docs/adr/0002-java21-spring-boot-3.4.md) | Java 21 + Spring Boot 3.4.1 |
+| [0003](docs/adr/0003-dual-converter-strategy.md) | Dual Converter Strategy (Cached + Standard) |
+| [0004](docs/adr/0004-chunked-parallelism.md) | Chunked Parallelism (CPU-core-based) |
+| [0005](docs/adr/0005-loki-grafana-over-elk-splunk.md) | Loki + Grafana over ELK/Splunk |
+| [0006](docs/adr/0006-unified-grafana-observability.md) | Unified Grafana for metrics, logs, infra |
+| [0007](docs/adr/0007-api-key-auth-bucket4j-rate-limiting.md) | API Key + Bucket4j Rate Limiting |
+| [0008](docs/adr/0008-github-actions-over-jenkins.md) | GitHub Actions over Jenkins |
+| [0009](docs/adr/0009-k6-over-gatling.md) | k6 over Gatling for Load Testing |
+| [0010](docs/adr/0010-multi-tool-ai-development-guide.md) | Multi-Tool AI Development Guide |
+| [0011](docs/adr/0011-mcp-server-for-ai-composability.md) | MCP Server for AI Composability |
+| [0012](docs/adr/0012-local-code-review-agent.md) | Local Code Review Agent |
+
+---
+
+## Dependency Attribution
+
+| Dependency | Purpose | License |
+|-----------|---------|---------|
+| `spring-boot-starter-web` | Embedded Tomcat, Spring MVC, JSON serialization | Apache 2.0 |
+| `spring-boot-starter-actuator` | Health, info, metrics, prometheus endpoints | Apache 2.0 |
+| `spring-boot-starter-security` | Security headers, CORS, filter chain | Apache 2.0 |
+| `spring-boot-starter-validation` | Jakarta Bean Validation (Hibernate Validator) | Apache 2.0 |
+| `micrometer-registry-prometheus` | Prometheus metrics format (Grafana) | Apache 2.0 |
+| `logstash-logback-encoder` | JSON-structured logging (Loki) | Apache 2.0 |
+| `springdoc-openapi-starter-webmvc-ui` | OpenAPI 3.1 spec + Swagger UI | Apache 2.0 |
+| `bucket4j-core` | Token-bucket rate limiting | Apache 2.0 |
+| `lombok` | `@Slf4j`, `@RequiredArgsConstructor` | MIT |
+| `spring-boot-starter-test` | JUnit 5, Mockito, MockMvc, AssertJ | Apache 2.0 |
+| `spring-security-test` | Security test utilities | Apache 2.0 |
+| `jacoco-maven-plugin` | Code coverage reports, 80% threshold | EPL 2.0 |
 
 ---
 
