@@ -214,7 +214,7 @@ docker compose down
 
 ### Interactive Swagger UI
 
-Available at [localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) (no API key required).
+Available at [localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) (no API key required to view). Click "Authorize" → enter `test-api-key-1` to execute requests via "Try it out".
 
 ![Swagger UI](docs/screenshots/swagger-ui.png)
 
