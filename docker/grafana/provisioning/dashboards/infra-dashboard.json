@@ -62,7 +62,8 @@
       "gridPos": { "h": 8, "w": 4, "x": 8, "y": 0 },
       "targets": [
         {
-          "expr": "1 - (node_filesystem_avail_bytes{device=~\"/dev/.+\"} / node_filesystem_size_bytes{device=~\"/dev/.+\"})",
+          "expr": "1 - (sum by(device)(node_filesystem_avail_bytes{device=~\"/dev/.+\"}) / sum by(device)(node_filesystem_size_bytes{device=~\"/dev/.+\"}))",
+          "legendFormat": "{{ device }}",
           "refId": "A"
         }
       ],
