@@ -386,7 +386,7 @@ Descending value-table approach with 13-entry parallel arrays (7 standard symbol
 ./mvnw verify              # run tests + JaCoCo coverage check (≥80%)
 ```
 
-**Coverage: 94.5% line, 95.9% instruction** (JaCoCo threshold: 80%)
+**Coverage: 94.9% line, 95.7% instruction** (JaCoCo threshold: 80%)
 
 ---
 
