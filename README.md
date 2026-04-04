@@ -269,6 +269,8 @@ Header: X-API-Key: <your-key>
 
 ## Architecture
 
+> **Detailed sequence diagrams**: [docs/sequence-diagrams.md](docs/sequence-diagrams.md) — single query, range query (parallel), auth failure, rate limiting, startup, observability data flow.
+
 ### Clean / Hexagonal Architecture
 
 Dependencies point inward. Domain has zero framework imports.
