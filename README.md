@@ -148,23 +148,24 @@ OPENAI_API_KEY=sk-your-key python3 scripts/ai-review.py --all --model gpt-4o
 
 **MCP Server (connect AI agents to the service):**
 ```bash
-# Install MCP server dependencies in a virtual environment
-cd mcp-server
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cd ..
+# 1. Install MCP server dependencies (one-time setup)
+cd mcp-server && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && cd ..
 
-# Start the Roman numeral service
-./mvnw spring-boot:run
+# 2. Make sure the Roman numeral service is running (via mvnw or docker compose)
 
-# Register with Claude Code (use full absolute paths — both venv python and server.py)
+# 3. Register MCP server with Claude Code (run from project root, use full absolute paths)
 claude mcp add roman-numeral \
   -e SERVICE_URL=http://localhost:8080 \
   -e API_KEY=test-api-key-1 \
-  -- /full/path/to/mcp-server/venv/bin/python3 /full/path/to/mcp-server/server.py
+  -- /absolute/path/to/roman-numeral-service/mcp-server/venv/bin/python3 \
+  /absolute/path/to/roman-numeral-service/mcp-server/server.py
+
+# 4. Start a new Claude Code session from the project root
+claude
 ```
-Then ask Claude Code: *"Convert 1994 to a Roman numeral"*
+Then ask: *"Convert 1994 to a Roman numeral"*
+
+> **Important:** Run `claude mcp add` from the project root (not `mcp-server/`) so the MCP config is scoped correctly. Use full absolute paths for both the venv python and server.py.
 
 For Cursor, VS Code, Claude Desktop setup: see [`mcp-server/README.md`](mcp-server/README.md)
 
@@ -568,25 +569,21 @@ Any MCP-compatible AI agent can use the conversion service as a tool.
 **Tools:** `convert_number`, `convert_range` — ask your AI *"Convert 1994 to a Roman numeral"* and it calls your local service.
 
 ```bash
-# 1. Install MCP server (one-time setup)
+# 1. Install (one-time)
 cd mcp-server && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && cd ..
 
-# 2. Start the service
-./mvnw spring-boot:run
+# 2. Make sure the service is running (via mvnw or docker compose)
 
 # 3. Connect to your AI tool (pick one):
 ```
 
-| AI Tool | Quick Start |
-|---------|-------------|
-| **Claude Code** | `claude mcp add roman-numeral -e SERVICE_URL=... -e API_KEY=... -- <venv>/bin/python3 <path>/server.py` ([details](mcp-server/README.md#claude-code-cli)) |
-| **Claude Desktop** | Add to `claude_desktop_config.json` ([details](mcp-server/README.md#claude-desktop)) |
-| **Cursor** | Add to `.cursor/mcp.json` ([details](mcp-server/README.md#cursor)) |
-| **VS Code / Copilot** | Add to `.vscode/mcp.json` ([details](mcp-server/README.md#vs-code-github-copilot-with-mcp-support)) |
+| AI Tool | Setup |
+|---------|-------|
+| **Claude Code** (tested) | `claude mcp add` from project root — [full instructions](mcp-server/README.md#claude-code-cli) |
+| **Claude Desktop** | JSON config — [instructions](mcp-server/README.md#claude-desktop) |
+| **Other tools** (Cursor, VS Code, Windsurf) | Standard stdio MCP — [generic setup](mcp-server/README.md#other-mcp-compatible-tools-cursor-vs-code-windsurf-etc) |
 
-> **Note:** All configurations use the venv's Python (`mcp-server/venv/bin/python3`) to find installed dependencies. See [full setup](mcp-server/README.md) for details.
-
-Full setup for each tool: [`mcp-server/README.md`](mcp-server/README.md)
+> **Important:** Use venv's Python (`mcp-server/venv/bin/python3`) and full absolute paths. Run `claude mcp add` from the project root, not `mcp-server/`. Details: [`mcp-server/README.md`](mcp-server/README.md)
 
 ### AI Code Review Agent
 

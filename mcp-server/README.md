@@ -41,13 +41,29 @@ pip install -r requirements.txt
 
 ## Connect to Your AI Tool
 
-**Step 1:** Start the Roman numeral service
-```bash
-# From the project root
-./mvnw spring-boot:run
-```
+**Step 1:** Make sure the Roman numeral service is running (via `./mvnw spring-boot:run` or `docker compose up`)
 
 **Step 2:** Connect the MCP server to your AI tool (pick one):
+
+### Claude Code (CLI)
+
+> **Important:** Run `claude mcp add` from the **project root** (not `mcp-server/`). Use **full absolute paths** for both the venv python and server.py.
+
+```bash
+# From the project root: /path/to/roman-numeral-service/
+claude mcp add roman-numeral \
+  -e SERVICE_URL=http://localhost:8080 \
+  -e API_KEY=test-api-key-1 \
+  -- /absolute/path/to/roman-numeral-service/mcp-server/venv/bin/python3 \
+  /absolute/path/to/roman-numeral-service/mcp-server/server.py
+
+# Start a new Claude Code session from the project root
+claude
+```
+
+Then ask: *"Convert 1994 to a Roman numeral"*
+
+To remove: `claude mcp remove roman-numeral`
 
 ### Claude Desktop
 
@@ -57,8 +73,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "roman-numeral": {
-      "command": "<full-path-to-project>/mcp-server/venv/bin/python3",
-      "args": ["<full-path-to-project>/mcp-server/server.py"],
+      "command": "/absolute/path/to/roman-numeral-service/mcp-server/venv/bin/python3",
+      "args": ["/absolute/path/to/roman-numeral-service/mcp-server/server.py"],
       "env": {
         "SERVICE_URL": "http://localhost:8080",
         "API_KEY": "test-api-key-1"
@@ -70,68 +86,21 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 Restart Claude Desktop. Ask: *"Convert 1994 to a Roman numeral"*
 
-### Claude Code (CLI)
+### Other MCP-Compatible Tools (Cursor, VS Code, Windsurf, etc.)
 
-> **Important:** Use full absolute paths — relative paths don't work with `claude mcp add`. Use the venv's python so it finds the installed dependencies.
+This server uses **stdio transport** (standard MCP protocol). To connect any MCP-compatible tool, configure it to run:
 
-```bash
-claude mcp add roman-numeral \
-  -e SERVICE_URL=http://localhost:8080 \
-  -e API_KEY=test-api-key-1 \
-  -- /full/path/to/mcp-server/venv/bin/python3 /full/path/to/mcp-server/server.py
+```
+Command:  /absolute/path/to/roman-numeral-service/mcp-server/venv/bin/python3
+Args:     /absolute/path/to/roman-numeral-service/mcp-server/server.py
+Env vars: SERVICE_URL=http://localhost:8080
+          API_KEY=test-api-key-1
 ```
 
-Then ask Claude Code: *"Convert 1994 to a Roman numeral"*
-
-### Cursor
-
-Add to `.cursor/mcp.json` in the project root:
-
-```json
-{
-  "mcpServers": {
-    "roman-numeral": {
-      "command": "mcp-server/venv/bin/python3",
-      "args": ["mcp-server/server.py"],
-      "env": {
-        "SERVICE_URL": "http://localhost:8080",
-        "API_KEY": "test-api-key-1"
-      }
-    }
-  }
-}
-```
-
-Restart Cursor. The tools appear in Cursor's MCP tool list.
-
-### VS Code (GitHub Copilot with MCP support)
-
-Add to `.vscode/mcp.json`:
-
-```json
-{
-  "servers": {
-    "roman-numeral": {
-      "command": "mcp-server/venv/bin/python3",
-      "args": ["mcp-server/server.py"],
-      "env": {
-        "SERVICE_URL": "http://localhost:8080",
-        "API_KEY": "test-api-key-1"
-      }
-    }
-  }
-}
-```
-
-### Any MCP-Compatible Client
-
-The server uses stdio transport (standard MCP). Run:
-
-```bash
-SERVICE_URL=http://localhost:8080 API_KEY=test-api-key-1 mcp-server/venv/bin/python3 mcp-server/server.py
-```
-
-Connect your MCP client to stdin/stdout of this process.
+Refer to your tool's MCP documentation for the exact config format:
+- **Cursor**: [Cursor MCP docs](https://docs.cursor.com/context/model-context-protocol)
+- **VS Code / Copilot**: [VS Code MCP docs](https://code.visualstudio.com/docs/copilot/chat/mcp-servers)
+- **Windsurf**: Check Windsurf's MCP configuration guide
 
 ## Test It
 
