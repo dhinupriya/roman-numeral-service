@@ -129,26 +129,33 @@ def read_files(file_paths):
 # LLM Calls (Provider-Agnostic)
 # ============================================================================
 
-def call_anthropic(system_prompt, user_prompt):
+DEFAULT_MODELS = {
+    "anthropic": "claude-sonnet-4-20250514",
+    "openai": "gpt-4o",
+    "google": "gemini-1.5-pro",
+}
+
+
+def call_anthropic(system_prompt, user_prompt, model=None):
     """Call Anthropic Claude API."""
     import anthropic
     client = anthropic.Anthropic()
     response = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=4096,
+        model=model or DEFAULT_MODELS["anthropic"],
+        max_tokens=8192,
         system=system_prompt,
         messages=[{"role": "user", "content": user_prompt}],
     )
     return response.content[0].text
 
 
-def call_openai(system_prompt, user_prompt):
+def call_openai(system_prompt, user_prompt, model=None):
     """Call OpenAI GPT API."""
     import openai
     client = openai.OpenAI()
     response = client.chat.completions.create(
-        model="gpt-4o",
-        max_tokens=4096,
+        model=model or DEFAULT_MODELS["openai"],
+        max_tokens=8192,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
@@ -157,26 +164,26 @@ def call_openai(system_prompt, user_prompt):
     return response.choices[0].message.content
 
 
-def call_google(system_prompt, user_prompt):
+def call_google(system_prompt, user_prompt, model=None):
     """Call Google Gemini API."""
     import google.generativeai as genai
     genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-    model = genai.GenerativeModel("gemini-1.5-pro")
-    response = model.generate_content(
+    gen_model = genai.GenerativeModel(model or DEFAULT_MODELS["google"])
+    response = gen_model.generate_content(
         f"{system_prompt}\n\n{user_prompt}",
-        generation_config=genai.GenerationConfig(max_output_tokens=4096),
+        generation_config=genai.GenerationConfig(max_output_tokens=8192),
     )
     return response.text
 
 
-def call_llm(provider, system_prompt, user_prompt):
+def call_llm(provider, system_prompt, user_prompt, model=None):
     """Route to the detected provider."""
     if provider == "anthropic":
-        return call_anthropic(system_prompt, user_prompt)
+        return call_anthropic(system_prompt, user_prompt, model)
     elif provider == "openai":
-        return call_openai(system_prompt, user_prompt)
+        return call_openai(system_prompt, user_prompt, model)
     elif provider == "google":
-        return call_google(system_prompt, user_prompt)
+        return call_google(system_prompt, user_prompt, model)
     else:
         raise ValueError(f"Unknown provider: {provider}")
 
@@ -192,6 +199,7 @@ def main():
     parser.add_argument("files", nargs="*", help="Specific files to review")
     parser.add_argument("--all", action="store_true", help="Review entire project source")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be sent (no API call)")
+    parser.add_argument("--model", type=str, default=None, help="Override LLM model (e.g., claude-sonnet-4-20250514, claude-opus-4-20250514, gpt-4o)")
     args = parser.parse_args()
 
     # Detect provider
@@ -252,30 +260,93 @@ def main():
         sys.exit(0)
 
     # Build prompts
-    system_prompt = f"""You are a principal software engineer reviewing code for a production Java service.
+    system_prompt = f"""You are a principal software engineer with 20+ years of experience conducting a formal code review for a production-grade Java service. You are an expert in Clean Architecture, SOLID principles, Java 21, Spring Boot, concurrency, security, and observability.
 
-Review the code against these project conventions and best practices:
+Your review must be thorough, specific, and actionable — the kind of feedback that would come from a senior architect at a top tech company. Reference specific file names and line numbers. Do not give generic advice.
+
+## Project Conventions (MUST be enforced)
 
 {conventions}
 
-Provide a structured review with these sections:
-1. **Architecture Compliance** — does the code follow Clean/Hexagonal architecture rules?
-2. **Code Quality** — naming, readability, SOLID principles
-3. **Security** — input validation, error handling, no exposed internals
-4. **Testing** — coverage gaps, missing edge cases
-5. **What's Good** — highlight strong practices found
-6. **Recommendations** — specific, actionable improvements
+## Review Structure
 
-Be specific — reference file names and line-level issues. Focus on what matters most."""
+Produce a structured review with these sections:
 
-    user_prompt = f"Review the following source code:\n\n{file_contents}"
+### 1. Executive Summary
+A 2-3 sentence overall assessment. Rate the codebase: Production-Ready / Needs Minor Fixes / Needs Major Refactoring.
+
+### 2. Architecture Compliance
+- Does the domain layer have zero Spring imports?
+- Do dependencies point inward only?
+- Is ConverterConfig used for explicit wiring (no @Primary/@Qualifier)?
+- Are use cases in the application layer, not controllers?
+- Is the Port/Adapter pattern correctly applied?
+For each violation, specify: file, line, what's wrong, how to fix.
+
+### 3. Code Quality & SOLID Principles
+- Single Responsibility: does each class have one reason to change?
+- Open/Closed: can behavior be extended without modifying existing code?
+- Naming: are classes, methods, variables self-documenting?
+- Magic numbers/strings: are constants used appropriately?
+- Readability: are methods small and focused?
+For each issue, specify: file, what's wrong, suggested fix.
+
+### 4. Concurrency & Thread Safety
+- Is the ChunkedParallelExecutor correctly implemented?
+- Are shared resources properly handled?
+- Is the CachedConverter thread-safe?
+- Are there potential race conditions?
+- Is virtual thread usage appropriate?
+
+### 5. Security Review
+- Input validation: are all inputs validated at boundaries?
+- XSS prevention: is user input sanitized in error messages?
+- Error handling: are stack traces ever exposed to clients?
+- API key handling: are keys hardcoded anywhere?
+- Rate limiting: is the implementation correct?
+- Filter ordering: is the security filter chain correct?
+
+### 6. Testing Assessment
+- Are there missing test cases or edge cases?
+- Is the testing pyramid balanced (unit > integration > E2E)?
+- Are tests testing behavior or implementation details?
+- Thread safety tests: are they adequate?
+- Are test assertions specific enough?
+
+### 7. Observability Review
+- Are all business metrics recorded?
+- Is structured logging consistent?
+- Is correlation ID properly propagated and cleaned up?
+- Are health checks meaningful?
+
+### 8. What's Excellent
+Highlight 3-5 things that are done exceptionally well. Be specific about WHY they're good — not just "good naming" but "the sealed exception hierarchy in DomainException.java enables exhaustive handling in GlobalExceptionHandler."
+
+### 9. Priority Improvements
+List the top 5 improvements ranked by impact. For each:
+- **What**: specific change needed
+- **Where**: file and location
+- **Why**: what risk or issue it addresses
+- **How**: concrete code suggestion
+
+### 10. Overall Score
+Rate each area out of 10:
+- Architecture: X/10
+- Code Quality: X/10
+- Security: X/10
+- Testing: X/10
+- Observability: X/10
+- Overall: X/10"""
+
+    user_prompt = f"Conduct a formal principal-engineer-level code review of the following production Java service:\n\n{file_contents}"
 
     # Call LLM
-    print(f"\nSending to {provider_name}...", file=sys.stderr)
+    model_name = args.model or DEFAULT_MODELS.get(provider, "default")
+    print(f"\nSending to {provider_name} (model: {model_name})...", file=sys.stderr)
     try:
-        review = call_llm(provider, system_prompt, user_prompt)
+        review = call_llm(provider, system_prompt, user_prompt, args.model)
         print(f"\n{'=' * 60}")
-        print(f"  AI CODE REVIEW ({provider_name})")
+        print(f"  AI CODE REVIEW ({provider_name} — {model_name})")
         print(f"{'=' * 60}\n")
         print(review)
         print(f"\n{'=' * 60}")
