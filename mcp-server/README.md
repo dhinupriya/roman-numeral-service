@@ -70,8 +70,13 @@ Restart Claude Desktop. Ask: *"Convert 1994 to a Roman numeral"*
 
 ### Claude Code (CLI)
 
+> **Important:** Use the full absolute path to `server.py` — relative paths don't work with `claude mcp add`.
+
 ```bash
-claude mcp add roman-numeral -- python3 mcp-server/server.py
+claude mcp add roman-numeral \
+  -e SERVICE_URL=http://localhost:8080 \
+  -e API_KEY=test-api-key-1 \
+  -- python3 /full/path/to/roman-numeral-service/mcp-server/server.py
 ```
 
 Then ask Claude Code: *"Convert 1994 to a Roman numeral"*

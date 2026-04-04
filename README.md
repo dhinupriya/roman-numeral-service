@@ -148,15 +148,18 @@ OPENAI_API_KEY=sk-your-key python3 scripts/ai-review.py --all --model gpt-4o
 
 **MCP Server (connect AI agents to the service):**
 ```bash
-# Start the Roman numeral service first
+# Install MCP server dependencies
+cd mcp-server && pip3 install -r requirements.txt && cd ..
+
+# Start the Roman numeral service
 ./mvnw spring-boot:run
 
-# In another terminal
-cd mcp-server
-pip3 install -r requirements.txt
-python3 server.py
+# Register with Claude Code (use full absolute path to server.py)
+claude mcp add roman-numeral -e SERVICE_URL=http://localhost:8080 -e API_KEY=test-api-key-1 -- python3 /full/path/to/mcp-server/server.py
 ```
-See [`mcp-server/README.md`](mcp-server/README.md) for Claude Desktop integration.
+Then ask Claude Code: *"Convert 1994 to a Roman numeral"*
+
+For Cursor, VS Code, Claude Desktop setup: see [`mcp-server/README.md`](mcp-server/README.md)
 
 ---
 

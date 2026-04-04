@@ -18,7 +18,7 @@ from typing import Any
 
 import httpx
 from mcp.server import Server
-from mcp.server.stdio import run_server
+from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
 # Configuration
@@ -136,7 +136,12 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         }))]
 
 
+async def main():
+    async with stdio_server() as (read_stream, write_stream):
+        await server.run(read_stream, write_stream, server.create_initialization_options())
+
+
 if __name__ == "__main__":
     import asyncio
     print(f"Starting Roman Numeral MCP Server (service: {SERVICE_URL})", file=sys.stderr)
-    asyncio.run(run_server(server))
+    asyncio.run(main())
